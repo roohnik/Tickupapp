@@ -234,3 +234,5 @@ const AddBoardModal: React.FC = observer(() => {
     </Modal>
   );
 });
+
+export default AddBoardModal;
