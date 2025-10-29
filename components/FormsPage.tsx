@@ -1,31 +1,41 @@
 import React from 'react';
-import { Form, FormCategory, User, FormSubmission, Project, Board } from '../types';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '../stores/StoreContext';
+import { FormCategory } from '../types';
 import FormCard from './FormCard';
 import { KANBAN_COLOR_MAP } from '../constants';
 import { PlusIcon } from './Icons';
 
-interface FormsPageProps {
-  forms: Form[];
-  categories: FormCategory[];
-  submissions: FormSubmission[];
-  onCreateForm: () => void;
-  onOpenForm: (formId: string) => void;
-  onEditForm: (formId: string) => void;
-  onTogglePinForm: (formId: string) => void;
-  currentUser: User;
-  onMoveFormRequest: (formId: string) => void;
-}
-
 const FormCategoryColumn: React.FC<{ 
     category: FormCategory; 
-    forms: Form[];
-    submissions: FormSubmission[];
-    onOpenForm: (formId: string) => void;
-    onEditForm: (formId: string) => void;
-    onTogglePinForm: (formId: string) => void;
-    currentUser: User;
-    onMoveFormRequest: (formId: string) => void;
-}> = ({ category, forms, submissions, onOpenForm, onEditForm, onTogglePinForm, currentUser, onMoveFormRequest }) => {
+}> = observer(({ category }) => {
+    const { formStore, userStore, uiStore } = useStore();
+    const forms = formStore.forms.filter(f => f.categoryId === category.id);
+    const submissions = formStore.submissions;
+    const currentUser = userStore.currentUser;
+    
+    const handleOpenForm = (formId: string) => {
+        uiStore.selectedFormId = formId;
+        uiStore.openModal('viewForm');
+    };
+    
+    const handleEditForm = (formId: string) => {
+        uiStore.selectedFormId = formId;
+        uiStore.openModal('editForm');
+    };
+    
+    const handleTogglePinForm = (formId: string) => {
+        const form = forms.find(f => f.id === formId);
+        if (form) {
+            formStore.updateForm({ ...form, isPinned: !form.isPinned });
+        }
+    };
+    
+    const handleMoveFormRequest = (formId: string) => {
+        uiStore.selectedFormId = formId;
+        uiStore.openModal('moveForm');
+    };
+    
     const colorScheme = KANBAN_COLOR_MAP[category.color || 'gray'] || KANBAN_COLOR_MAP.gray;
     return (
         <div className={`rounded-lg p-2 pt-1 flex flex-col flex-shrink-0 w-[calc(100vw-3rem)] sm:w-80 lg:w-96 ${colorScheme.bg}`}>
@@ -38,31 +48,39 @@ const FormCategoryColumn: React.FC<{
             </div>
             <div className="space-y-2 h-full overflow-y-auto p-1 rounded-md">
                 {forms.map(form => {
-                    const hasDraft = submissions.some(s => s.formId === form.id && s.submittedById === currentUser.id && s.status === 'DRAFT');
+                    const hasDraft = currentUser && submissions.some(s => s.formId === form.id && s.submittedById === currentUser.id && s.status === 'DRAFT');
                     return (
                         <FormCard 
                             key={form.id} 
                             form={form} 
-                            onOpen={() => onOpenForm(form.id)}
-                            onEdit={onEditForm}
-                            onTogglePin={onTogglePinForm}
-                            currentUser={currentUser}
+                            onOpen={() => handleOpenForm(form.id)}
+                            onEdit={handleEditForm}
+                            onTogglePin={handleTogglePinForm}
+                            currentUser={currentUser!}
                             hasDraft={hasDraft}
-                            onMoveRequest={onMoveFormRequest}
+                            onMoveRequest={handleMoveFormRequest}
                         />
                     );
                 })}
             </div>
         </div>
     );
-};
+});
 
-const FormsPage: React.FC<FormsPageProps> = ({ forms, categories, submissions, onCreateForm, onOpenForm, onEditForm, onTogglePinForm, currentUser, onMoveFormRequest }) => {
+const FormsPage: React.FC = observer(() => {
+    const { formStore, uiStore } = useStore();
+    const forms = formStore.forms;
+    const categories = formStore.categories;
+    
+    const handleCreateForm = () => {
+        uiStore.openModal('createForm');
+    };
+    
   return (
     <div>
         <div className="flex justify-end items-center mb-6">
             <button
-                onClick={onCreateForm}
+                onClick={handleCreateForm}
                 className="flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg font-semibold shadow-sm hover:bg-blue-600 transition-colors"
             >
                 <PlusIcon className="w-5 h-5 ml-2" />
@@ -74,18 +92,11 @@ const FormsPage: React.FC<FormsPageProps> = ({ forms, categories, submissions, o
                 <FormCategoryColumn
                     key={cat.id}
                     category={cat}
-                    forms={forms.filter(f => f.categoryId === cat.id)}
-                    submissions={submissions}
-                    onOpenForm={onOpenForm}
-                    onEditForm={onEditForm}
-                    onTogglePinForm={onTogglePinForm}
-                    currentUser={currentUser}
-                    onMoveFormRequest={onMoveFormRequest}
                 />
             ))}
         </div>
     </div>
   );
-};
+});
 
 export default FormsPage;
