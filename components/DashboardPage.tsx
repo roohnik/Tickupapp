@@ -1,50 +1,23 @@
 import React, { useState, useMemo } from 'react';
-import { Objective, User, KeyResult, ObjectiveSettings, Task } from '../types';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '../stores/StoreContext';
+import { KeyResult } from '../types';
 import ObjectiveRow from './ObjectiveRow';
 import KeyResultRow from './KeyResultRow';
 import DailyTargetCard from './DailyTargetCard';
 import { OBJECTIVE_CATEGORIES, OBJECTIVE_COLOR_MAP } from '../constants';
 import HierarchicalView from './HierarchicalView';
 import { SparklesIcon } from './Icons';
+import { emitObjectiveCreate, emitObjectiveUpdate, emitObjectiveDelete, emitObjectiveUpdateKr, emitObjectiveDeleteKr } from '../emitter';
+import { createTask, updateTask } from '../emitter';
 
-
-interface DashboardPageProps {
-  objectives: Objective[];
-  users: User[];
-  tasks: Task[];
-  onSelectObjective: (objective: Objective) => void;
-  onAddNewObjective: () => void;
-  onAddKeyResult: (objectiveId: string) => void;
-  onSelectKeyResult: (objectiveId: string, krId: string) => void;
-  onEditObjective: (objective: Objective) => void;
-  onDeleteObjective: (objectiveId: string) => void;
-  onDeleteKeyResult: (objectiveId: string, keyResultId: string) => void;
-  onUpdateKeyResultDetails: (objectiveId: string, krId: string, updates: Partial<KeyResult>) => void;
-  objectiveSettings: ObjectiveSettings;
-  onArchiveObjective: (objectiveId: string) => void;
-  onArchiveKeyResult: (objectiveId: string, krId: string) => void;
-  onToggleDailyTargetTaskInAnjam: (krId: string) => void;
-  onStartSmartWizard: () => void;
-}
-
-const DashboardPage: React.FC<DashboardPageProps> = ({ 
-    objectives, 
-    users, 
-    tasks,
-    onSelectObjective,
-    onAddNewObjective,
-    onAddKeyResult,
-    onSelectKeyResult,
-    onEditObjective,
-    onDeleteObjective,
-    onDeleteKeyResult,
-    onUpdateKeyResultDetails,
-    objectiveSettings,
-    onArchiveObjective,
-    onArchiveKeyResult,
-    onToggleDailyTargetTaskInAnjam,
-    onStartSmartWizard,
-}) => {
+const DashboardPage: React.FC = observer(() => {
+    const { objectiveStore, userStore, taskStore, settingsStore, uiStore } = useStore();
+    const objectives = objectiveStore.objectives;
+    const users = userStore.users;
+    const tasks = taskStore.tasks;
+    const objectiveSettings = settingsStore.objectiveSettings;
+    
     const [expandedObjectiveId, setExpandedObjectiveId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'list' | 'hierarchy' | 'dailyTargets'>('list');
     const [listViewMode, setListViewMode] = useState<'objectives' | 'keyResults'>('objectives');
@@ -74,25 +47,94 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         setExpandedObjectiveId(prev => (prev === objectiveId ? null : objectiveId));
     };
     
-    // Placeholder handlers for new actions
-    const handleEditKeyResult = (krId: string) => {
-        alert(`Editing key result ${krId}`);
+    const handleSelectObjective = (objective: any) => {
+        uiStore.selectedObjective = objective;
     };
-
+    
+    const handleAddNewObjective = () => {
+        uiStore.openModal('addObjective');
+    };
+    
+    const handleAddKeyResult = (objectiveId: string) => {
+        // Implementation needed
+    };
+    
+    const handleSelectKeyResult = (objectiveId: string, krId: string) => {
+        // Implementation needed
+    };
+    
+    const handleEditObjective = (objective: any) => {
+        uiStore.selectedObjective = objective;
+        uiStore.openModal('editObjective');
+    };
+    
+    const handleDeleteObjective = async (objectiveId: string) => {
+        await emitObjectiveDelete(objectiveId);
+    };
+    
+    const handleDeleteKeyResult = async (objectiveId: string, keyResultId: string) => {
+        await emitObjectiveDeleteKr(keyResultId);
+    };
+    
+    const handleUpdateKeyResultDetails = async (objectiveId: string, krId: string, updates: Partial<KeyResult>) => {
+        await emitObjectiveUpdateKr(krId, updates);
+    };
+    
+    const handleArchiveObjective = async (objectiveId: string) => {
+        const objective = objectives.find(o => o.id === objectiveId);
+        if (objective) {
+            await emitObjectiveUpdate({ ...objective, isArchived: true });
+        }
+    };
+    
+    const handleArchiveKeyResult = async (objectiveId: string, krId: string) => {
+        await emitObjectiveUpdateKr(krId, { isArchived: true });
+    };
+    
+    const handleToggleDailyTargetTaskInAnjam = async (krId: string) => {
+        const todayString = new Date().toISOString().split('T')[0];
+        const existingTask = tasks.find(t => t.dailyTargetKrId === krId && t.dueDate?.startsWith(todayString));
+        
+        if (existingTask) {
+            // Remove the task
+            await updateTask(existingTask.id, { ...existingTask, dailyTargetKrId: undefined });
+        } else {
+            // Create a new task for today
+            const kr = objectives
+                .flatMap(o => o.keyResults)
+                .find(k => k.id === krId);
+            if (kr) {
+                await createTask({
+                    title: `Daily target: ${kr.title}`,
+                    dailyTargetKrId: krId,
+                    dueDate: new Date().toISOString(),
+                    status: 'todo'
+                });
+            }
+        }
+    };
+    
+    const handleStartSmartWizard = () => {
+        uiStore.openModal('smartWizard');
+    };
+    
+    const handleEditKeyResult = (krId: string) => {
+        uiStore.openModal('editKeyResult');
+    };
 
     return (
         <div>
             <div className="flex justify-end items-center mb-6">
                  <div className="flex items-center space-x-2 space-x-reverse">
                     <button
-                        onClick={onStartSmartWizard}
+                        onClick={handleStartSmartWizard}
                         className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold shadow-sm hover:bg-purple-700 transition-all"
                     >
                         <SparklesIcon className="w-5 h-5 ml-2" />
                         طراحی هدف
                     </button>
                     <button
-                        onClick={onAddNewObjective}
+                        onClick={handleAddNewObjective}
                         className="px-4 py-2 bg-brand-primary text-white rounded-lg font-semibold shadow-sm hover:bg-blue-600"
                     >
                         ایجاد هدف جدید
@@ -151,10 +193,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                                         owner={users.find(u => u.id === obj.ownerId)}
                                         isExpanded={expandedObjectiveId === obj.id}
                                         onToggleExpand={() => toggleExpand(obj.id)}
-                                        onSelectObjective={() => onSelectObjective(obj)}
-                                        onEditObjective={() => onEditObjective(obj)}
-                                        onDeleteObjective={() => onDeleteObjective(obj.id)}
-                                        onArchiveObjective={() => onArchiveObjective(obj.id)}
+                                        onSelectObjective={() => handleSelectObjective(obj)}
+                                        onEditObjective={() => handleEditObjective(obj)}
+                                        onDeleteObjective={() => handleDeleteObjective(obj.id)}
+                                        onArchiveObjective={() => handleArchiveObjective(obj.id)}
                                         categories={OBJECTIVE_CATEGORIES}
                                     />
                                     {expandedObjectiveId === obj.id && (
@@ -164,11 +206,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                                                     key={kr.id}
                                                     kr={kr}
                                                     owner={users.find(u => u.id === kr.ownerId)}
-                                                    onSelect={() => onSelectKeyResult(obj.id, kr.id)}
-                                                    onUpdateKR={(updates) => onUpdateKeyResultDetails(obj.id, kr.id, updates)}
-                                                    onDelete={() => onDeleteKeyResult(obj.id, kr.id)}
+                                                    onSelect={() => handleSelectKeyResult(obj.id, kr.id)}
+                                                    onUpdateKR={(updates) => handleUpdateKeyResultDetails(obj.id, kr.id, updates)}
+                                                    onDelete={() => handleDeleteKeyResult(obj.id, kr.id)}
                                                     onEdit={() => handleEditKeyResult(kr.id)}
-                                                    onArchive={() => onArchiveKeyResult(obj.id, kr.id)}
+                                                    onArchive={() => handleArchiveKeyResult(obj.id, kr.id)}
                                                     isCompact
                                                 />
                                             ))}
@@ -193,11 +235,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                                                     key={kr.id}
                                                     kr={kr}
                                                     owner={users.find(u => u.id === kr.ownerId)}
-                                                    onSelect={() => onSelectKeyResult(obj.id, kr.id)}
-                                                    onUpdateKR={(updates) => onUpdateKeyResultDetails(obj.id, kr.id, updates)}
-                                                    onDelete={() => onDeleteKeyResult(obj.id, kr.id)}
+                                                    onSelect={() => handleSelectKeyResult(obj.id, kr.id)}
+                                                    onUpdateKR={(updates) => handleUpdateKeyResultDetails(obj.id, kr.id, updates)}
+                                                    onDelete={() => handleDeleteKeyResult(obj.id, kr.id)}
                                                     onEdit={() => handleEditKeyResult(kr.id)}
-                                                    onArchive={() => onArchiveKeyResult(obj.id, kr.id)}
+                                                    onArchive={() => handleArchiveKeyResult(obj.id, kr.id)}
                                                     objectiveTitle={obj.title}
                                                 />
                                             ))}
@@ -212,11 +254,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                      <HierarchicalView
                         objectives={objectives}
                         users={users}
-                        onSelectObjective={onSelectObjective}
+                        onSelectObjective={handleSelectObjective}
                         hierarchicalViewStyle={objectiveSettings.hierarchicalViewStyle}
-                        onEditObjective={onEditObjective}
-                        onArchiveObjective={onArchiveObjective}
-                        onDeleteObjective={onDeleteObjective}
+                        onEditObjective={handleEditObjective}
+                        onArchiveObjective={handleArchiveObjective}
+                        onDeleteObjective={handleDeleteObjective}
                     />
                 )}
                 {activeTab === 'dailyTargets' && (
@@ -227,12 +269,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                                     key={kr.id}
                                     kr={kr}
                                     owner={users.find(u => u.id === kr.ownerId)}
-                                    onUpdateKR={(updates) => onUpdateKeyResultDetails(kr.objectiveId, kr.id, updates)}
+                                    onUpdateKR={(updates) => handleUpdateKeyResultDetails(kr.objectiveId, kr.id, updates)}
                                     onEdit={() => handleEditKeyResult(kr.id)}
-                                    onArchive={() => onArchiveKeyResult(kr.objectiveId, kr.id)}
-                                    onDelete={() => onDeleteKeyResult(kr.objectiveId, kr.id)}
+                                    onArchive={() => handleArchiveKeyResult(kr.objectiveId, kr.id)}
+                                    onDelete={() => handleDeleteKeyResult(kr.objectiveId, kr.id)}
                                     isAddedToAnjam={todaysDailyTargetTaskKrIds.has(kr.id)}
-                                    onToggleAnjamTask={() => onToggleDailyTargetTaskInAnjam(kr.id)}
+                                    onToggleAnjamTask={() => handleToggleDailyTargetTaskInAnjam(kr.id)}
                                 />
                             ))
                         ) : (
@@ -246,6 +288,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
         </div>
     );
-};
+});
 
 export default DashboardPage;
+
