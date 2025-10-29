@@ -55,3 +55,4 @@ export class UserStore {
   logout = () => {
     this.currentUser = null;
   };
+}

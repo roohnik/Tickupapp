@@ -1,7 +1,24 @@
 //Use `userStore.currentUser` and `settingsStore.theme`.
+import React from 'react';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '../stores/StoreContext';
 
+export const Header: React.FC = observer(() => {
+  const { settingsStore, userStore } = useStore();
+  
+  return (
+    <header className="h-16 border-b flex items-center justify-between px-4">
+      <h1 className="text-xl font-bold">TickUp</h1>
+      <div className="flex items-center gap-4">
+        <span>{userStore.currentUser?.name || 'User'}</span>
+      </div>
+    </header>
+  );
+});
 
-/*import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+/*
+// OLD HEADER IMPLEMENTATION - COMMENTED OUT FOR NEW MOBX ARCHITECTURE
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { User, Objective, ActivePage, KeyResult, KRType, Notification } from '../types';
 import { AIPrompts } from '../services/geminiService';
 import { SparklesIcon, ThreeDotsIcon, ArrowDownIcon, SettingsIcon, TrashIcon, ArrowRightIcon, EyeIcon, ArchiveBoxIcon, BellIcon, AtSymbolIcon, CheckCircleIcon, ChatBubbleOvalLeftEllipsisIcon, GoalIcon } from './Icons';

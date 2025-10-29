@@ -514,6 +514,22 @@ export const deleteKRCategory = async (id: string) => {
   return await safeEmit("krCategories:delete", { id }, "Category deleted", "krCategory", "delete");
 };
 
+// Aliases for store compatibility
+export const emitKRCategoryList = fetchKRCategories;
+export const emitKRCategoryCreate = createKRCategory;
+export const emitKRCategoryUpdate = updateKRCategory;
+export const emitKRCategoryDelete = deleteKRCategory;
+
+export const emitKRCheckinList = fetchKRCheckins;
+export const emitKRCheckinCreate = createKRCheckin;
+export const emitKRCheckinUpdate = updateKRCheckin;
+export const emitKRCheckinDelete = deleteKRCheckin;
+
+export const emitKeyResultList = fetchKeyResults;
+export const emitKeyResultCreate = createKeyResult;
+export const emitKeyResultUpdate = updateKeyResult;
+export const emitKeyResultDelete = deleteKeyResult;
+
 
 /* -------------------------------------------------------
    🔹 PROJECTS
@@ -548,6 +564,12 @@ export const updateGeneralFeedback = async (data: any) => {
 export const deleteGeneralFeedback = async (id: string) => {
   return await safeEmit("feedback:delete", { id }, "Feedback deleted", "feedback", "delete");
 };
+
+// Aliases for FeedbackStore compatibility
+export const emitGeneralFeedbackList = fetchGeneralFeedbacks;
+export const emitGeneralFeedbackCreate = createGeneralFeedback;
+export const emitGeneralFeedbackUpdate = updateGeneralFeedback;
+export const emitGeneralFeedbackDelete = deleteGeneralFeedback;
 
 /* -------------------------------------------------------
    🔹 FORMS
