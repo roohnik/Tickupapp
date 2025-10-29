@@ -930,7 +930,7 @@ const App: React.FC = observer(() => {
       setActivePage("feedback");
     }
   };
-  const handleMissionSelect = (mission: SuggestedMission) => {
+  const handleMissionSelect = async (mission: SuggestedMission) => {
     const newVision: CompanyVision = {
       ...companyVision,
       missionTitle: mission.missionTitle,
