@@ -586,7 +586,19 @@ const App: React.FC = observer(() => {
   const handleLogin = (username: string, password: string) => {
     setIsLoggingIn(true);
     setLoginError("");
-    socket.emit("login:attempt", { username, password });
+    // Updated to match backend event name
+    socket.emit("login", { username, password }, (response: any) => {
+      setIsLoggingIn(false);
+      if (response?.ok) {
+        // Backend also emits "login:success" which SocketManager handles
+        // Store token if needed
+        if (response.token) {
+          localStorage.setItem('authToken', response.token);
+        }
+      } else {
+        setLoginError(response?.error || "Login failed");
+      }
+    });
   };
 
   const handleLogout = () => {

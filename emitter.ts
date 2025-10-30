@@ -600,7 +600,7 @@ export const updateForm = async (form: any) => {
    🔹 CALENDAR
 ------------------------------------------------------- */
 export const createCalendarEvent = async (event: any) => {
-  return await safeEmit("calendar:createEvent", event, "Calendar event created", "calendarEvent", "create");
+  return await safeEmit("calendar:create", event, "Calendar event created", "calendarEvent", "create");
 };
 
 export const emitUserRegister = async (data: {
