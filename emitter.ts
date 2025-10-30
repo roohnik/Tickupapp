@@ -5,7 +5,21 @@ import { User, Process, Strategy, Task, Team, Workspace  } from "./types";
 import { safeEmit } from "./utils/socketActions";
 
 
+/**
+ * Auto-generated helper for "documents:list".
+ * Review payload shape and entity/action and update as needed.
+ */
+export const documents_list = async (payload?: any) => {
+  return await safeEmit("documents:list", payload, undefined, "document", "view");
+};
 
+/**
+ * Auto-generated helper for "documentStatuses:list".
+ * Review payload shape and entity/action and update as needed.
+ */
+export const documentStatuses_list = async (payload?: any) => {
+  return await safeEmit("documentStatuses:list", payload, undefined, "documentStatus", "view");
+};
 /** 🔹 List all workspaces */
 export const fetchWorkspaces = async () => {
   return await safeEmit(
@@ -705,3 +719,4 @@ export const emitObjectiveCheckIn = async (krId: string, value: number, rating?:
   { krId, value, rating, report, challengeDifficulty, challengeTagIds }, 
   "Key Result updated", "objective", "edit");
 };
+
