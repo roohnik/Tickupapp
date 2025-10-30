@@ -26,10 +26,13 @@ View your app in AI Studio: https://ai.studio/apps/drive/1KXCBnwR08st52wkcHoXFg4
 - Node.js (v16 or higher)
 - A running backend server with Socket.io
 
-> **⚠️ IMPORTANT:** This frontend requires a backend server. See **[QUICKSTART_BACKEND.md](QUICKSTART_BACKEND.md)** for:
-> - Quick backend setup (5 minutes)
-> - How to connect your existing backend
-> - Testing connectivity
+> **✅ BACKEND SYNCHRONIZED:** This frontend is now synced with https://github.com/nikpz/Tickappback.git  
+> See **[SYNC_COMPLETE.md](SYNC_COMPLETE.md)** for complete integration summary.
+>
+> **Setup Guide:** See **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** for:
+> - Backend setup instructions
+> - Connection testing
+> - Troubleshooting
 
 ## Run Locally
 
