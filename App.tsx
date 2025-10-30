@@ -68,7 +68,6 @@ import {
 } from "./services/geminiService";
 import { CONSULTANTS } from "./constants";
 import { observer } from "mobx-react-lite";
-import { useSocketListeners } from "./hooks/useSocketListeners";
 import { useStore } from "./stores/StoreContext";
 
 import { Sidebar } from "./components/Sidebar";
@@ -184,6 +183,11 @@ import {
   emitObjectiveDeleteKr,
   emitObjectiveCheckIn,
   updateLearningAssignment,
+  createStrategy,
+  updateStrategy,
+  deleteStrategy,
+  toggleDailyTarget,
+  updateProject,
 } from "./emitter";
 
 const ArchivedStrategyIndexModal: React.FC<{
@@ -328,8 +332,6 @@ const App: React.FC = observer(() => {
   const [isConsultantPopoverOpen, setIsConsultantPopoverOpen] = useState(false); //!!!!!!!!!!
   const consultantButtonRef = React.useRef<HTMLButtonElement>(null); //!!!!!!!!!!!!!!!!
 
-  // ✅ activate real-time listeners once
-  useSocketListeners();
   // on mount: if you want to join user room for direct notifications
 
   useEffect(() => {
@@ -796,46 +798,33 @@ const App: React.FC = observer(() => {
     krId: string,
     updates: Partial<KeyResult>
   ) => await emitObjectiveUpdateKr(krId, updates);
-  const handleArchiveObjective = (objectiveId: string) =>
-    socket.emit("objectives:update", { id: objectiveId, isArchived: true });
-  const handleUnarchiveObjective = (objectiveId: string) =>
-    socket.emit("objectives:update", { id: objectiveId, isArchived: false });
-  const handleArchiveKeyResult = (objectiveId: string, keyResultId: string) =>
-    socket.emit("objectives:update-kr", {
-      objectiveId,
-      krId: keyResultId,
-      updates: { isArchived: true },
-    });
-  const handleUnarchiveKeyResult = (objectiveId: string, keyResultId: string) =>
-    socket.emit("objectives:update-kr", {
-      objectiveId,
-      krId: keyResultId,
-      updates: { isArchived: false },
-    });
-  const handleSaveStrategy = (
+  const handleArchiveObjective = async (objectiveId: string) =>
+    await emitObjectiveUpdate({ id: objectiveId, isArchived: true });
+  const handleUnarchiveObjective = async (objectiveId: string) =>
+    await emitObjectiveUpdate({ id: objectiveId, isArchived: false });
+  const handleArchiveKeyResult = async (objectiveId: string, keyResultId: string) =>
+    await emitObjectiveUpdateKr(keyResultId, { isArchived: true });
+  const handleUnarchiveKeyResult = async (objectiveId: string, keyResultId: string) =>
+    await emitObjectiveUpdateKr(keyResultId, { isArchived: false });
+  const handleSaveStrategy = async (
     data: Omit<Strategy, "id" | "isArchived">,
     id?: string
   ) =>
-    socket.emit(id ? "strategies:update" : "strategies:create", {
-      ...data,
-      id,
-    });
-  const handleArchiveStrategy = (id: string) =>
-    socket.emit("strategies:update", { id, isArchived: true });
-  const handleUnarchiveStrategy = (id: string) =>
-    socket.emit("strategies:update", { id, isArchived: false });
-  const handleSaveIndex = (
+    id ? await updateStrategy({ ...data, id }) : await createStrategy(data);
+  const handleArchiveStrategy = async (id: string) =>
+    await safeEmit("strategies:update", { id, isArchived: true }, "Strategy archived", "strategy", "edit");
+  const handleUnarchiveStrategy = async (id: string) =>
+    await safeEmit("strategies:update", { id, isArchived: false }, "Strategy unarchived", "strategy", "edit");
+  const handleSaveIndex = async (
     data: Omit<Index, "id" | "isArchived">,
     id?: string
-  ) => socket.emit(id ? "indices:update" : "indices:create", { ...data, id });
-  const handleArchiveIndex = (id: string) =>
-    socket.emit("indices:update", { id, isArchived: true });
-  const handleUnarchiveIndex = (id: string) =>
-    socket.emit("indices:update", { id, isArchived: false });
-  const handleToggleDailyTargetTaskInAnjam = (krId: string) =>
-    socket.emit("tasks:toggle-daily-target", {
-      krId,
-      date: new Date().toISOString(),
+  ) => await safeEmit(id ? "indices:update" : "indices:create", { ...data, id }, id ? "Index updated" : "Index created", "index", id ? "edit" : "create");
+  const handleArchiveIndex = async (id: string) =>
+    await safeEmit("indices:update", { id, isArchived: true }, "Index archived", "index", "edit");
+  const handleUnarchiveIndex = async (id: string) =>
+    await safeEmit("indices:update", { id, isArchived: false }, "Index unarchived", "index", "edit");
+  const handleToggleDailyTargetTaskInAnjam = async (krId: string) =>
+    await toggleDailyTarget(krId, new Date().toISOString());
     });
   const handleAddGeneralFeedback = (
     data: Omit<GeneralFeedback, "id" | "giverId" | "createdAt">
@@ -852,12 +841,12 @@ const App: React.FC = observer(() => {
         : "feedbackTags:create",
       tag, "feedbackTags created or updated"
     );
-  const handleDeleteFeedbackTag = (tagId: string) =>
-    socket.emit("feedbackTags:delete", tagId);
-  const handleArchiveProject = (projectId: string) =>
-    socket.emit("projects:update", { id: projectId, isArchived: true });
-  const handleUnarchiveProject = (projectId: string) =>
-    socket.emit("projects:update", { id: projectId, isArchived: false });
+  const handleDeleteFeedbackTag = async (tagId: string) =>
+    await safeEmit("feedbackTags:delete", tagId, "Feedback tag deleted", "feedbackTag", "delete");
+  const handleArchiveProject = async (projectId: string) =>
+    await updateProject({ id: projectId, isArchived: true });
+  const handleUnarchiveProject = async (projectId: string) =>
+    await updateProject({ id: projectId, isArchived: false });
   const handleSelectConsultant = (consultant: Consultant) => {
     setSelectedConsultant(consultant);
     setActivePage("consulting");
@@ -1116,14 +1105,14 @@ const App: React.FC = observer(() => {
               companyVision={store.companyVision}
               onAddStrategy={(data) => handleSaveStrategy(data)}
               onUpdateStrategy={(data) => handleSaveStrategy(data, data.id)}
-              onDeleteStrategy={(id) => socket.emit("strategies:delete", id)}
+              onDeleteStrategy={async (id) => await deleteStrategy(id)}
               onArchiveStrategy={handleArchiveStrategy}
               onAddIndex={(data) => handleSaveIndex(data)}
               onUpdateIndex={(data) => handleSaveIndex(data, data.id)}
-              onDeleteIndex={(id) => socket.emit("indices:delete", id)}
+              onDeleteIndex={async (id) => await safeEmit("indices:delete", { id }, "Index deleted", "index", "delete")}
               onArchiveIndex={handleArchiveIndex}
-              setCompanyVision={(vision) =>
-                socket.emit("companyVision:update", vision)
+              setCompanyVision={async (vision) =>
+                await safeEmit("companyVision:update", vision, "Company vision updated", "companyVision", "edit")
               }
               cardSettings={componentStyles.strategyCards}
               popupSettings={componentStyles.popups}
@@ -1153,20 +1142,20 @@ const App: React.FC = observer(() => {
               onUpdateTask={handleUpdateTask}
               onDeleteTasks={handleDeleteTasks}
               onAddTask={handleOpenAddTaskModal}
-              onUpdateColumnTitle={(colId, title) =>
-                socket.emit("columns:update", { id: colId, title })
+              onUpdateColumnTitle={async (colId, title) =>
+                await safeEmit("columns:update", { id: colId, title }, "Column updated", "column", "edit")
               }
-              onAddColumn={(title) =>
-                socket.emit("columns:create", { title, color: "gray" })
+              onAddColumn={async (title) =>
+                await safeEmit("columns:create", { title, color: "gray" }, "Column created", "column", "create")
               }
-              onUpdateColumnColor={(colId, color) =>
-                socket.emit("columns:update", { id: colId, color })
+              onUpdateColumnColor={async (colId, color) =>
+                await safeEmit("columns:update", { id: colId, color }, "Column color updated", "column", "edit")
               }
-              onUpdateColumnIcon={(colId, icon) =>
-                socket.emit("columns:update", { id: colId, icon })
+              onUpdateColumnIcon={async (colId, icon) =>
+                await safeEmit("columns:update", { id: colId, icon }, "Column icon updated", "column", "edit")
               }
               onQuickAddTask={handleQuickAddTask}
-              onUpdateProject={(proj) => socket.emit("projects:update", proj)}
+              onUpdateProject={async (proj) => await updateProject(proj)}
               onAddProject={() => setIsAddProjectModalOpen(true)}
               onArchiveProject={handleArchiveProject}
               isListViewComfortable={isListViewComfortable}
@@ -1176,34 +1165,34 @@ const App: React.FC = observer(() => {
               onUpdateTaskFieldLabel={(field, newLabel) =>
                 setTaskFieldLabels((prev) => ({ ...prev, [field]: newLabel }))
               }
-              onAddCustomFieldDefinitionToProject={(projId, type) => {
+              onAddCustomFieldDefinitionToProject={async (projId, type) => {
                 const newDef: CustomFieldDefinition = {
                   id: `cf-${Date.now()}`,
                   label: `فیلد ${type.toLowerCase()}`,
                   type,
                 };
-                socket.emit("projects:add-custom-field", {
+                await safeEmit("projects:add-custom-field", {
                   projId,
                   definition: newDef,
-                });
+                }, "Custom field added", "project", "edit");
                 return newDef; // Note: This might be optimistic
               }}
-              onUpdateCustomFieldDefinitionInProject={(
+              onUpdateCustomFieldDefinitionInProject={async (
                 projId,
                 defId,
                 updates
               ) =>
-                socket.emit("projects:update-custom-field", {
+                await safeEmit("projects:update-custom-field", {
                   projId,
                   defId,
                   updates,
-                })
+                }, "Custom field updated", "project", "edit")
               }
               onDeleteCustomFieldDefinitionFromProject={
                 onDeleteCustomFieldDefinitionFromProject
               }
-              onUpdateColumnDetails={(colId, updates) =>
-                socket.emit("columns:update", { id: colId, ...updates })
+              onUpdateColumnDetails={async (colId, updates) =>
+                await safeEmit("columns:update", { id: colId, ...updates }, "Column updated", "column", "edit")
               }
               popupSettings={componentStyles.popups}
               activeCardTemplate={activeCardTemplate}
@@ -1264,12 +1253,12 @@ const App: React.FC = observer(() => {
 
             <AdminPage
               users={store.users}
-              setUsers={(updater) => socket.emit("users:set", updater(users))}
+              setUsers={async (updater) => await safeEmit("users:set", updater(users), "Users updated", "user", "edit")}
               teams={store.teams}
-              setTeams={(updater) => socket.emit("teams:set", updater(teams))}
+              setTeams={async (updater) => await safeEmit("teams:set", updater(teams), "Teams updated", "team", "edit")}
               processes={store.processes}
-              setProcesses={(updater) =>
-                socket.emit("processes:set", updater(store.processes))
+              setProcesses={async (updater) =>
+                await safeEmit("processes:set", updater(store.processes), "Processes updated", "process", "edit")
               }
               forms={store.forms}
               sidebarConfig={sidebarConfig}
@@ -1306,7 +1295,7 @@ const App: React.FC = observer(() => {
               currentUser={currentUser}
               onSelectTask={setSelectedTaskId}
               onUpdateTask={handleUpdateTask}
-              onUpdateProject={(p) => socket.emit("projects:update", p)}
+              onUpdateProject={async (p) => await updateProject(p)}
               onQuickAddTask={(content, projectId) =>
                 handleQuickAddTask(content, "todo", projectId)
               }
@@ -1328,8 +1317,8 @@ const App: React.FC = observer(() => {
 
             <DocumentsPage
               documents={store.documents}
-              setDocuments={(updater) =>
-                socket.emit("documents:set", updater(store.documents))
+              setDocuments={async (updater) =>
+                await safeEmit("documents:set", updater(store.documents), "Documents updated", "document", "edit")
               }
               users={store.users}
               tasks={store.tasks}
@@ -1355,8 +1344,8 @@ const App: React.FC = observer(() => {
               users={store.users}
               currentUser={currentUser}
               objectives={store.objectives}
-              onUpdateStatus={(id, status) =>
-                socket.emit("learningAssignments:update", { id, status })
+              onUpdateStatus={async (id, status) =>
+                await updateLearningAssignment({ id, status })
               }
               onCreateMicroLearning={() => setIsCreateMicroLearningOpen(true)}
               onViewMicroLearning={setMicroLearningToView}
@@ -1376,8 +1365,8 @@ const App: React.FC = observer(() => {
               onDeleteFeedbackTag={handleDeleteFeedbackTag}
               learningAssignments={store.learningAssignments}
               resources={{ microLearnings, youtubeVideos, books }}
-              onUpdateLearningAssignmentStatus={(id, status) =>
-                socket.emit("learningAssignments:update", { id, status })
+              onUpdateLearningAssignmentStatus={async (id, status) =>
+                await updateLearningAssignment({ id, status })
               }
             />
           </>
