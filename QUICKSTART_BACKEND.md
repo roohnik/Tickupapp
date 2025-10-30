@@ -146,7 +146,7 @@ Once connected, test synchronization:
 If Window 2 doesn't update:
 - Check browser console for socket errors
 - Verify backend emits broadcast events (`io.emit()`)
-- Ensure components use MobX stores (see [SYNC_ISSUES.md](SYNC_ISSUES.md))
+- Note: Some frontend components may not update due to incomplete MobX migration (see [SYNC_ISSUES.md](SYNC_ISSUES.md) for frontend-specific issues)
 
 ---
 
