@@ -33,6 +33,11 @@ import UpgradePage from "./components/UpgradePage";
 
 import { socket } from "./services/socketService";
 import { safeEmit } from "./utils/socketActions";
+import {
+  setDocuments,
+  fetchDocumentStatuses,
+  updateLearningAssignment,
+} from "./emitter";
 
 // ...other pages
 
@@ -70,32 +75,12 @@ case "documents": // ✅ new case
 
   React.useEffect(() => {
     if (!documentsLoaded) {
-      // Fetch documents
-      socket.emit("documents:set", documentStore.documents);
-
-      // Listen for updates from server
-      attachListeners.socket.on("documents:updated", (updatedDoc) => {
-        documentStore.updateDocument(updatedDoc);
-      });
-
-      socket.on("documents:set", (docs) => {
-        documentStore.setDocuments(docs);
-      });
-
-      // Fetch document statuses from server
-      socket.emit("documentStatuses:list", null, (statuses) => {
-        documentStore.setStatuses(statuses);
-      });
-
+      // Fetch documents and statuses - SocketManager will handle incoming updates
+      setDocuments(documentStore.documents);
+      fetchDocumentStatuses();
       setDocumentsLoaded(true);
-
-      // Cleanup listeners when unmounting
-      return () => {
-        socket.off("documents:updated");
-        socket.off("documents:set");
-      };
     }
-  }, [documentsLoaded, socketManager, documentStore]);
+  }, [documentsLoaded, documentStore]);
       return (
         <DocumentsPage
           documents={documentStore.documents}
@@ -124,7 +109,7 @@ case "documents": // ✅ new case
             currentUser={userStore.currentUser}
             objectives={learningStore.objectives}
             onUpdateStatus={(id, status) =>
-              socket.emit("learningAssignments:update", { id, status })
+              updateLearningAssignment({ id, status })
             }
             onCreateMicroLearning={() => setIsCreateMicroLearningOpen(true)}
             onViewMicroLearning={setFormToDisplay}
@@ -145,7 +130,7 @@ case "documents": // ✅ new case
             learningAssignments={learningStore.assignments}
             resources={{ microLearnings: [], youtubeVideos: [], books: [] }}
             onUpdateLearningAssignmentStatus={(id, status) =>
-              socket.emit("learningAssignments:update", { id, status })
+              updateLearningAssignment({ id, status })
             }
           />
         </>
