@@ -4,9 +4,15 @@ import { observer } from "mobx-react-lite";
 import { useStore } from "./stores/StoreContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// import ToastContainer from "./components/ToastContainer";
-
-import DashboardPage from "./components/DashboardPage";
+import { safeEmit } from "./utils/socketActions";
+import {
+  setDocuments,
+  fetchDocumentStatuses,
+  updateLearningAssignment,
+  createTeam,
+  updateTeam,
+  deleteTeam,
+} from "./emitter";
 import KanbanPage from "./components/KanbanPage";
 import ReportsPage from "./components/ReportsPage";
 import ModerationDashboard from "./components/ModerationDashboard";
@@ -31,13 +37,10 @@ import SelfKnowledgePage from "./components/SelfKnowledgePage";
 import OrganizationalKnowledgePage from "./components/OrganizationalKnowledgePage";
 import UpgradePage from "./components/UpgradePage";
 
-import { socket } from "./services/socketService";
-import { safeEmit } from "./utils/socketActions";
-
-// ...other pages
+import DashboardPage from "./components/DashboardPage";
 
 const Router: React.FC = observer(() => {
-  const { 
+  const {
     settingsStore, 
     documentStore, 
     userStore, 
@@ -65,53 +68,33 @@ const Router: React.FC = observer(() => {
     case "moderation":
       return <ModerationDashboard />;
 case "documents": // ✅ new case
-  // Local state to trigger fetch only once
-  const [documentsLoaded, setDocumentsLoaded] = useState(false);
-
+  // SocketManager already handles document listeners, so we don't need local listeners
+  // Just fetch initial data if needed
   React.useEffect(() => {
-    if (!documentsLoaded) {
-      // Fetch documents
-      socket.emit("documents:set", documentStore.documents);
-
-      // Listen for updates from server
-      attachListeners.socket.on("documents:updated", (updatedDoc) => {
-        documentStore.updateDocument(updatedDoc);
-      });
-
-      socket.on("documents:set", (docs) => {
-        documentStore.setDocuments(docs);
-      });
-
-      // Fetch document statuses from server
-      socket.emit("documentStatuses:list", null, (statuses) => {
-        documentStore.setStatuses(statuses);
-      });
-
-      setDocumentsLoaded(true);
-
-      // Cleanup listeners when unmounting
-      return () => {
-        socket.off("documents:updated");
-        socket.off("documents:set");
-      };
-    }
-  }, [documentsLoaded, socketManager, documentStore]);
-      return (
-        <DocumentsPage
-          documents={documentStore.documents}
-          setDocuments={documentStore.setDocuments}
-          users={userStore.users}
-          tasks={taskStore.tasks}
-          forms={formStore.forms}
-          documentStatuses={documentStore.statuses}
-          onSelectTask={setSelectedTaskId}
-          onOpenForm={(id) =>
-            setFormToDisplay(formStore.forms.find((f) => f.id === id) || null)
-          }
-          activeDocumentId={activeDocumentId}
-          setActiveDocumentId={setActiveDocumentId}
-        />
-      );
+    // Request document statuses on mount if needed
+    // SocketManager already fetches these, but we can ensure they're loaded
+    fetchDocumentStatuses();
+  }, []);
+  
+  return (
+    <DocumentsPage
+      documents={documentStore.documents}
+      setDocuments={(updater) => {
+        const updated = updater(documentStore.documents);
+        setDocuments(updated);
+      }}
+      users={userStore.users}
+      tasks={taskStore.tasks}
+      forms={formStore.forms}
+      documentStatuses={documentStore.statuses}
+      onSelectTask={setSelectedTaskId}
+      onOpenForm={(id) =>
+        setFormToDisplay(formStore.forms.find((f) => f.id === id) || null)
+      }
+      activeDocumentId={activeDocumentId}
+      setActiveDocumentId={setActiveDocumentId}
+    />
+  );
 
       case "learning":
       return (
@@ -124,7 +107,7 @@ case "documents": // ✅ new case
             currentUser={userStore.currentUser}
             objectives={learningStore.objectives}
             onUpdateStatus={(id, status) =>
-              socket.emit("learningAssignments:update", { id, status })
+              updateLearningAssignment({ id, status })
             }
             onCreateMicroLearning={() => setIsCreateMicroLearningOpen(true)}
             onViewMicroLearning={setFormToDisplay}
@@ -145,7 +128,7 @@ case "documents": // ✅ new case
             learningAssignments={learningStore.assignments}
             resources={{ microLearnings: [], youtubeVideos: [], books: [] }}
             onUpdateLearningAssignmentStatus={(id, status) =>
-              socket.emit("learningAssignments:update", { id, status })
+              updateLearningAssignment({ id, status })
             }
           />
         </>
@@ -164,13 +147,9 @@ case "documents": // ✅ new case
             forms={formStore.forms}
             feedbackTags={feedbackStore.tags}
             onSaveTeam={(teamData) =>
-              safeEmit(
-                teamData.id ? "teams:update" : "teams:create",
-                teamData,
-                teamData.id ? "teams updated" : "teams created"
-              )
+              teamData.id ? updateTeam({ teamId: teamData.id, fields: teamData }) : createTeam(teamData)
             }
-            onDeleteTeam={(teamId: any) => safeEmit("teams:delete", teamId, "teams deleted")}
+            onDeleteTeam={(teamId: any) => deleteTeam(teamId)}
           />
         </>
       );
