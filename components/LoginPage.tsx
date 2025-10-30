@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '../stores/StoreContext';
+import { emitUserLogin } from '../emitter';
 
-interface LoginPageProps {
-  onLogin: (username: string, password: string) => void;
-  error: string;
-  isLoading: boolean;
-}
-
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, error, isLoading }) => {
+const LoginPage: React.FC = observer(() => {
+  const { userStore } = useStore();
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin');
   const [rememberMe, setRememberMe] = useState(false);
   const [localError, setLocalError] = useState('');
-
-  useEffect(() => {
-    setLocalError(error);
-  }, [error]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('tickup_username');
@@ -26,16 +21,28 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, error, isLoading }) => {
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError('');
-    onLogin(username, password);
-    if (rememberMe) {
-        localStorage.setItem('tickup_username', username);
-        localStorage.setItem('tickup_password', password);
-    } else {
-        localStorage.removeItem('tickup_username');
-        localStorage.removeItem('tickup_password');
+    setIsLoading(true);
+    
+    try {
+      const result = await emitUserLogin({ username, password });
+      if (result?.ok) {
+        if (rememberMe) {
+          localStorage.setItem('tickup_username', username);
+          localStorage.setItem('tickup_password', password);
+        } else {
+          localStorage.removeItem('tickup_username');
+          localStorage.removeItem('tickup_password');
+        }
+      } else {
+        setLocalError(result?.error || 'Login failed');
+      }
+    } catch (error) {
+      setLocalError('An error occurred during login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -119,6 +126,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, error, isLoading }) => {
       </div>
     </>
   );
-};
+});
 
 export default LoginPage;

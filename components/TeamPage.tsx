@@ -1,4 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '../stores/StoreContext';
+import { createTeam, updateTeam, deleteTeam } from '../emitter';
 import { User, Team, Objective, Task, FormSubmission, Form, FeedbackTag } from '../types';
 import MemberProfileSidePanel from './MemberProfileSidePanel';
 import NewTeamModal from '../modals/NewTeamModal';
@@ -106,11 +109,33 @@ interface TeamPageProps {
     onDeleteTeam: (teamId: string) => void;
 }
 
-const TeamPage: React.FC<TeamPageProps> = (props) => {
+const TeamPage: React.FC = observer(() => {
+    const { userStore, teamStore, objectiveStore, taskStore, formStore, feedbackStore, uiStore } = useStore();
+    const users = userStore.users;
+    const teams = teamStore.teams;
+    const objectives = objectiveStore.objectives;
+    const tasks = taskStore.tasks;
+    const submissions = formStore.submissions;
+    const forms = formStore.forms;
+    const feedbackTags = feedbackStore.feedbackTags;
+    
     const [activeTab, setActiveTab] = useState<'members' | 'teams'>('members');
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
     const [teamToEdit, setTeamToEdit] = useState<Team | null>(null);
+    
+    const handleSaveTeam = async (teamData: Omit<Team, 'id'> & { id?: string }) => {
+        if (teamData.id) {
+            await updateTeam({ teamId: teamData.id, fields: teamData });
+        } else {
+            await createTeam(teamData);
+        }
+        setIsTeamModalOpen(false);
+    };
+    
+    const handleDeleteTeam = async (teamId: string) => {
+        await deleteTeam(teamId);
+    };
     
     const handleEditTeam = (team: Team) => {
         setTeamToEdit(team);
@@ -137,8 +162,8 @@ const TeamPage: React.FC<TeamPageProps> = (props) => {
 
             {activeTab === 'members' && (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                    {props.users.map(user => (
-                        <MemberCard key={user.id} user={user} objectives={props.objectives} onClick={() => setSelectedUser(user)} />
+                    {users.map(user => (
+                        <MemberCard key={user.id} user={user} objectives={objectives} onClick={() => setSelectedUser(user)} />
                     ))}
                 </div>
             )}
@@ -152,8 +177,8 @@ const TeamPage: React.FC<TeamPageProps> = (props) => {
                         </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {props.teams.map(team => (
-                            <TeamCard key={team.id} team={team} users={props.users} onEdit={() => handleEditTeam(team)} onDelete={() => props.onDeleteTeam(team.id)} />
+                        {teams.map(team => (
+                            <TeamCard key={team.id} team={team} users={users} onEdit={() => handleEditTeam(team)} onDelete={() => handleDeleteTeam(team.id)} />
                         ))}
                     </div>
                 </div>
@@ -163,7 +188,12 @@ const TeamPage: React.FC<TeamPageProps> = (props) => {
                 <MemberProfileSidePanel 
                     user={selectedUser}
                     onClose={() => setSelectedUser(null)}
-                    {...props}
+                    objectives={objectives}
+                    tasks={tasks}
+                    submissions={submissions}
+                    forms={forms}
+                    users={users}
+                    feedbackTags={feedbackTags}
                 />
             )}
             
@@ -171,13 +201,13 @@ const TeamPage: React.FC<TeamPageProps> = (props) => {
                 <NewTeamModal 
                     isOpen={isTeamModalOpen}
                     onClose={() => setIsTeamModalOpen(false)}
-                    onSave={props.onSaveTeam}
-                    users={props.users}
+                    onSave={handleSaveTeam}
+                    users={users}
                     teamToEdit={teamToEdit}
                 />
             )}
         </div>
     );
-};
+});
 
 export default TeamPage;

@@ -217,7 +217,7 @@ const EditProfileModal: React.FC = observer(() => {
         <div className="flex justify-end pt-4 space-x-2 space-x-reverse">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => uiStore.closeModal("editProfile")}
             className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
           >
             لغو
