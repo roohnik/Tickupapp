@@ -705,3 +705,144 @@ export const emitObjectiveCheckIn = async (krId: string, value: number, rating?:
   { krId, value, rating, report, challengeDifficulty, challengeTagIds }, 
   "Key Result updated", "objective", "edit");
 };
+
+/* -------------------------------------------------------
+   🔹 ADDITIONAL EMITTER HELPERS FOR SOCKETMANAGER EVENTS
+------------------------------------------------------- */
+
+/** 🔹 Client join - notify server of user connection */
+export const emitClientJoin = async (userId: string) => {
+  return await safeEmit("client:join", { userId }, undefined, "auth", "view");
+};
+
+/** 🔹 Login attempt */
+export const emitLoginAttempt = async (username: string, password: string) => {
+  return await safeEmit("login:attempt", { username, password }, undefined, "auth", "login");
+};
+
+/** 🔹 Create Kanban column */
+export const createColumn = async (column: any) => {
+  return await safeEmit("columns:create", column, "Column created", "column", "create");
+};
+
+/** 🔹 Update Kanban column */
+export const updateColumn = async (column: any) => {
+  return await safeEmit("columns:update", column, "Column updated", "column", "edit");
+};
+
+/** 🔹 Update company vision */
+export const updateCompanyVision = async (vision: any) => {
+  return await safeEmit("companyVision:update", vision, "Company vision updated", "companyVision", "edit");
+};
+
+/** 🔹 Set documents (bulk sync) */
+export const setDocuments = async (documents: any[]) => {
+  return await safeEmit("documents:set", documents, undefined, "document", "sync");
+};
+
+/** 🔹 Delete feedback tag */
+export const deleteFeedbackTag = async (id: string) => {
+  return await safeEmit("feedbackTags:delete", { id }, "Feedback tag deleted", "feedbackTag", "delete");
+};
+
+/** 🔹 Move form to board */
+export const moveFormToBoard = async (formId: string, boardId: string) => {
+  return await safeEmit("forms:move-to-board", { formId, boardId }, "Form moved to board", "form", "edit");
+};
+
+/** 🔹 Toggle form pin status */
+export const toggleFormPin = async (id: string) => {
+  return await safeEmit("forms:toggle-pin", { id }, "Form pin toggled", "form", "edit");
+};
+
+/** 🔹 Delete index/KPI */
+export const deleteIndex = async (id: string) => {
+  return await safeEmit("indices:delete", { id }, "Index deleted", "index", "delete");
+};
+
+/** 🔹 Create or update index/KPI */
+export const createOrUpdateIndex = async (data: any) => {
+  return await safeEmit(
+    data.id ? "indices:update" : "indices:create",
+    data,
+    data.id ? "Index updated" : "Index created",
+    "index",
+    data.id ? "edit" : "create"
+  );
+};
+
+/** 🔹 Add comment to objective */
+export const addObjectiveComment = async (objectiveId: string, comment: any) => {
+  return await safeEmit(
+    "objectives:add-comment",
+    { objectiveId, comment },
+    "Comment added",
+    "objective",
+    "edit"
+  );
+};
+
+/** 🔹 Create objective with key results */
+export const createObjectiveWithKRs = async (objective: any) => {
+  return await safeEmit(
+    "objectives:create-with-krs",
+    objective,
+    "Objective created with key results",
+    "objective",
+    "create"
+  );
+};
+
+/** 🔹 Set processes (bulk sync) */
+export const setProcesses = async (processes: any[]) => {
+  return await safeEmit("processes:set", processes, undefined, "process", "sync");
+};
+
+/** 🔹 Add custom field to project */
+export const addProjectCustomField = async (projId: string, definition: any) => {
+  return await safeEmit(
+    "projects:add-custom-field",
+    { projId, definition },
+    "Custom field added",
+    "project",
+    "edit"
+  );
+};
+
+/** 🔹 Update project custom field */
+export const updateProjectCustomField = async (projId: string, defId: string, updates: any) => {
+  return await safeEmit(
+    "projects:update-custom-field",
+    { projId, defId, updates },
+    "Custom field updated",
+    "project",
+    "edit"
+  );
+};
+
+/** 🔹 Submit form submission */
+export const submitFormSubmission = async (submissionData: any) => {
+  return await safeEmit(
+    "submissions:submit",
+    submissionData,
+    "Form submitted",
+    "submission",
+    "create"
+  );
+};
+
+/** 🔹 Save form submission draft */
+export const saveDraftSubmission = async (submissionData: any) => {
+  return await safeEmit(
+    "submissions:save-draft",
+    submissionData,
+    "Draft saved",
+    "submission",
+    "edit"
+  );
+};
+
+/** 🔹 Set users (bulk sync) */
+export const setUsers = async (users: any[]) => {
+  return await safeEmit("users:set", users, undefined, "user", "sync");
+};
