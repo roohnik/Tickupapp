@@ -705,3 +705,246 @@ export const emitObjectiveCheckIn = async (krId: string, value: number, rating?:
   { krId, value, rating, report, challengeDifficulty, challengeTagIds }, 
   "Key Result updated", "objective", "edit");
 };
+
+/* -------------------------------------------------------
+   🔹 BOARDS
+------------------------------------------------------- */
+/** List all boards */
+export const fetchBoards = async () => {
+  return await safeEmit("boards:list", {}, "Fetched boards", "board", "view");
+};
+
+/** Create a new board */
+export const createBoard = async (board: any) => {
+  return await safeEmit("boards:create", board, "Board created", "board", "create");
+};
+
+/** Update an existing board */
+export const updateBoard = async (board: any) => {
+  return await safeEmit("boards:update", board, "Board updated", "board", "edit");
+};
+
+/** Delete a board */
+export const deleteBoard = async (id: string) => {
+  return await safeEmit("boards:delete", { id }, "Board deleted", "board", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 COLUMNS
+------------------------------------------------------- */
+/** List all columns */
+export const fetchColumns = async () => {
+  return await safeEmit("columns:list", {}, "Fetched columns", "column", "view");
+};
+
+/** Create a new column */
+export const createColumn = async (column: any) => {
+  return await safeEmit("columns:create", column, "Column created", "column", "create");
+};
+
+/** Update an existing column */
+export const updateColumn = async (column: any) => {
+  return await safeEmit("columns:update", column, "Column updated", "column", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 DOCUMENTS
+------------------------------------------------------- */
+/** List all documents */
+export const fetchDocuments = async () => {
+  return await safeEmit("documents:list", {}, "Fetched documents", "document", "view");
+};
+
+/** Set documents (bulk sync) */
+export const setDocuments = async (documents: any[]) => {
+  return await safeEmit("documents:set", documents, "Documents synced", "document", "sync");
+};
+
+/** Create a new document */
+export const createDocument = async (document: any) => {
+  return await safeEmit("documents:create", document, "Document created", "document", "create");
+};
+
+/** Update an existing document */
+export const updateDocument = async (document: any) => {
+  return await safeEmit("documents:update", document, "Document updated", "document", "edit");
+};
+
+/** Delete a document */
+export const deleteDocument = async (id: string) => {
+  return await safeEmit("documents:delete", { id }, "Document deleted", "document", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 DOCUMENT STATUSES
+------------------------------------------------------- */
+/** List all document statuses */
+export const fetchDocumentStatuses = async () => {
+  return await safeEmit("documentStatuses:list", {}, "Fetched document statuses", "documentStatus", "view");
+};
+
+/* -------------------------------------------------------
+   🔹 CLIENT CONNECTION
+------------------------------------------------------- */
+/** Join client to server */
+export const joinClient = async (userId: string) => {
+  return await safeEmit("client:join", { userId }, "Joined successfully", "client", "join");
+};
+
+/* -------------------------------------------------------
+   🔹 COMPANY VISION
+------------------------------------------------------- */
+/** Update company vision */
+export const updateCompanyVision = async (vision: string) => {
+  return await safeEmit("companyVision:update", { vision }, "Company vision updated", "companyVision", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 CUSTOMER NEEDS
+------------------------------------------------------- */
+/** Create a customer need */
+export const createCustomerNeed = async (need: any) => {
+  return await safeEmit("customerNeeds:create", need, "Customer need created", "customerNeed", "create");
+};
+
+/** Update a customer need */
+export const updateCustomerNeed = async (need: any) => {
+  return await safeEmit("customerNeeds:update", need, "Customer need updated", "customerNeed", "edit");
+};
+
+/** Delete a customer need */
+export const deleteCustomerNeed = async (id: string) => {
+  return await safeEmit("customerNeeds:delete", { id }, "Customer need deleted", "customerNeed", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 FEEDBACK TAGS
+------------------------------------------------------- */
+/** List all feedback tags */
+export const fetchFeedbackTags = async () => {
+  return await safeEmit("feedbackTags:list", {}, "Fetched feedback tags", "feedbackTag", "view");
+};
+
+/** Delete a feedback tag */
+export const deleteFeedbackTag = async (id: string) => {
+  return await safeEmit("feedbackTags:delete", { id }, "Feedback tag deleted", "feedbackTag", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 FORMS - ADDITIONAL ACTIONS
+------------------------------------------------------- */
+/** Move form to a board */
+export const moveFormToBoard = async (formId: string, boardId: string) => {
+  return await safeEmit("forms:move-to-board", { formId, boardId }, "Form moved to board", "form", "edit");
+};
+
+/** Toggle form pin status */
+export const toggleFormPin = async (id: string) => {
+  return await safeEmit("forms:toggle-pin", { id }, "Form pin toggled", "form", "edit");
+};
+
+/** Delete a form */
+export const deleteForm = async (id: string) => {
+  return await safeEmit("forms:delete", { id }, "Form deleted", "form", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 INDICES (KPIs)
+------------------------------------------------------- */
+/** Create an index/KPI */
+export const createIndex = async (index: any) => {
+  return await safeEmit("indices:create", index, "Index created", "index", "create");
+};
+
+/** Update an index/KPI */
+export const updateIndex = async (index: any) => {
+  return await safeEmit("indices:update", index, "Index updated", "index", "edit");
+};
+
+/** Delete an index/KPI */
+export const deleteIndex = async (id: string) => {
+  return await safeEmit("indices:delete", { id }, "Index deleted", "index", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 OBJECTIVES - ADDITIONAL ACTIONS
+------------------------------------------------------- */
+/** Add a comment to an objective */
+export const addObjectiveComment = async (objectiveId: string, comment: any) => {
+  return await safeEmit("objectives:add-comment", { objectiveId, comment }, "Comment added", "objective", "edit");
+};
+
+/** Create an objective with key results */
+export const createObjectiveWithKrs = async (objective: any, keyResults: any[]) => {
+  return await safeEmit("objectives:create-with-krs", { objective, keyResults }, "Objective created with KRs", "objective", "create");
+};
+
+/* -------------------------------------------------------
+   🔹 PROJECTS - CUSTOM FIELDS
+------------------------------------------------------- */
+/** Delete a project */
+export const deleteProject = async (id: string) => {
+  return await safeEmit("projects:delete", { id }, "Project deleted", "project", "delete");
+};
+
+/** Add a custom field to a project */
+export const addProjectCustomField = async (projId: string, definition: any) => {
+  return await safeEmit("projects:add-custom-field", { projId, definition }, "Custom field added", "project", "edit");
+};
+
+/** Update a custom field in a project */
+export const updateProjectCustomField = async (projId: string, defId: string, updates: any) => {
+  return await safeEmit("projects:update-custom-field", { projId, defId, updates }, "Custom field updated", "project", "edit");
+};
+
+/** Delete a custom field from a project */
+export const deleteProjectCustomField = async (projId: string, defId: string) => {
+  return await safeEmit("projects:delete-custom-field", { projId, defId }, "Custom field deleted", "project", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 SUBMISSIONS
+------------------------------------------------------- */
+/** List all submissions */
+export const fetchSubmissions = async () => {
+  return await safeEmit("submissions:list", {}, "Fetched submissions", "submission", "view");
+};
+
+/** Submit a form submission */
+export const submitSubmission = async (submission: any) => {
+  return await safeEmit("submissions:submit", submission, "Submission submitted", "submission", "create");
+};
+
+/** Save a submission draft */
+export const saveSubmissionDraft = async (draft: any) => {
+  return await safeEmit("submissions:save-draft", draft, "Draft saved", "submission", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 CATEGORIES (FORM CATEGORIES)
+------------------------------------------------------- */
+/** List all categories */
+export const fetchCategories = async () => {
+  return await safeEmit("categories:list", {}, "Fetched categories", "category", "view");
+};
+
+/* -------------------------------------------------------
+   🔹 AUDIT
+------------------------------------------------------- */
+/** List all audit logs */
+export const fetchAuditLogs = async () => {
+  return await safeEmit("audit:list", {}, "Fetched audit logs", "audit", "view");
+};
+
+/** Log an audit entry */
+export const logAudit = async (log: any) => {
+  return await safeEmit("audit:log", log, "Audit logged", "audit", "create");
+};
+
+/* -------------------------------------------------------
+   🔹 TEAMS - LIST
+------------------------------------------------------- */
+/** Alias for fetchTeams with standardized naming */
+export const listTeams = async () => {
+  return await fetchTeams();
+};
