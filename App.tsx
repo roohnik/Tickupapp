@@ -168,6 +168,75 @@ import NewWorkspaceModal from "./modals/NewWorkspaceModal";
 import { emitWithAck } from "./utils/emitWithAck";
 import { showToast } from "./utils/toast";
 import { safeEmit } from "./utils/socketActions";
+import {
+  joinClientSession,
+  attemptLogin,
+  emitUserCreate,
+  emitUserUpdate,
+  setUsers,
+  createTask,
+  updateTask,
+  deleteTask,
+  toggleDailyTarget,
+  createForm,
+  updateForm,
+  toggleFormPin,
+  moveFormToBoard,
+  submitFormSubmission,
+  saveSubmissionDraft,
+  createObjectiveWithKRs,
+  emitObjectiveCheckIn,
+  addObjectiveComment,
+  emitObjectiveDelete,
+  emitObjectiveUpdate,
+  emitObjectiveUpdateKr,
+  emitObjectiveDeleteKr,
+  archiveObjective,
+  unarchiveObjective,
+  createOrUpdateStrategy,
+  deleteStrategy,
+  archiveStrategy,
+  unarchiveStrategy,
+  createOrUpdateIndex,
+  deleteIndex,
+  archiveIndex,
+  unarchiveIndex,
+  createProject,
+  updateProject,
+  archiveProject,
+  unarchiveProject,
+  addProjectCustomField,
+  updateProjectCustomField,
+  deleteProjectCustomField,
+  createColumn,
+  updateColumn,
+  createBoard,
+  updateBoard,
+  createWorkspace,
+  deleteFeedbackTag,
+  createCustomerNeed,
+  updateCustomerNeed,
+  deleteCustomerNeed,
+  markNotificationAsRead,
+  updateCompanyVision,
+  setProcesses,
+  updateDocument,
+  setDocuments,
+  updateLearningAssignment,
+  createMicroLearning,
+  setTeams,
+  deleteTeam,
+  fetchProjects,
+  fetchBoards,
+  fetchColumns,
+  fetchForms,
+  fetchFormCategories,
+  fetchStrategies,
+  fetchWorkspaces,
+  fetchFeedbackTags,
+  emitNotificationList,
+  fetchObjectives: emitObjectiveList,
+} from "./emitter";
 
 const ArchivedStrategyIndexModal: React.FC<{
   isOpen: boolean;
@@ -318,7 +387,7 @@ const App: React.FC = observer(() => {
   useEffect(() => {
     // if store.currentUser exists, tell server who we are so it can emit to our room
     if (store.currentUser?.id) {
-      socket.emit("client:join", { userId: store.currentUser.id });
+      joinClientSession(store.currentUser.id);
     }
 
     // =================================================================
@@ -326,30 +395,20 @@ const App: React.FC = observer(() => {
     // =================================================================
     //Optional: request initial lists if server requires (many servers send "initial-data" automatically)
     //safe to call; server should reply or ignore
-    emitWithAck("projects:list").catch(() => {});
-    emitWithAck("boards:list").catch(() => {});
-    emitWithAck("columns:list").catch(() => {});
-    emitWithAck("forms:list").catch(() => {});
-    emitWithAck("formCategories:list").catch(() => {});
-    emitWithAck("objectives:list").catch(() => {});
-    emitWithAck("strategies:list").catch(() => {});
-    emitWithAck("workspaces:list").catch(() => {});
-    emitWithAck("feedbackTags:list").catch(() => {});
+    fetchProjects().catch(() => {});
+    fetchBoards().catch(() => {});
+    fetchColumns().catch(() => {});
+    fetchForms().catch(() => {});
+    fetchFormCategories().catch(() => {});
+    emitObjectiveList().catch(() => {});
+    fetchStrategies().catch(() => {});
+    fetchWorkspaces().catch(() => {});
+    fetchFeedbackTags().catch(() => {});
     if (store.currentUser?.id) {
-      emitWithAck("notifications:list", { userId: store.currentUser.id }).catch(
+      emitNotificationList(store.currentUser.id).catch(
         () => {}
       );
     }
-    // socket.emit("projects:list");
-    // socket.emit("boards:list");
-    // socket.emit("columns:list");
-    // socket.emit("forms:list");
-    // socket.emit("formCategories:list");
-    // socket.emit("objectives:list");
-    // socket.emit("strategies:list");
-    // socket.emit("workspaces:list");
-    // socket.emit("feedbackTags:list");
-    // socket.emit("notifications:list", { userId: currentUser?.id });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.currentUser?.id]);
 
@@ -586,7 +645,7 @@ const App: React.FC = observer(() => {
   const handleLogin = (username: string, password: string) => {
     setIsLoggingIn(true);
     setLoginError("");
-    socket.emit("login:attempt", { username, password });
+    attemptLogin(username, password);
   };
 
   const handleLogout = () => {
@@ -610,22 +669,25 @@ const App: React.FC = observer(() => {
     password?: string,
     signatureUrl?: string | null
   ) =>
-    socket.emit("users:update", {
+    emitUserUpdate({
       id: userId,
-      data: { name, username, password, signatureUrl },
+      name,
+      username,
+      password,
+      signatureUrl,
     });
   const handleCreateUser = (userData: Omit<User, "id" | "avatarUrl">) =>
-    socket.emit("users:create", userData);
+    emitUserCreate(userData);
   const handleAddTask = (
     taskData: Omit<Task, "id" | "tags" | "comments" | "checklist">
-  ) => socket.emit("tasks:create", taskData);
+  ) => createTask(taskData);
   const handleQuickAddTask = (
     content: string,
     columnId: string,
     projectId: string
   ) => {
     if (!currentUser) return;
-    socket.emit("tasks:create", {
+    createTask({
       content,
       columnId,
       projectId,
@@ -634,11 +696,11 @@ const App: React.FC = observer(() => {
     });
   };
   const handleUpdateTask = (updatedTask: Task) =>
-    socket.emit("tasks:update", updatedTask);
+    updateTask(updatedTask.id, updatedTask);
   const handleTaskColumnChange = (taskId: string, newColumnId: string) =>
-    socket.emit("tasks:update", { id: taskId, columnId: newColumnId });
+    updateTask(taskId, { columnId: newColumnId });
   const handleDeleteTasks = (taskIds: string[]) =>
-    socket.emit("tasks:delete", taskIds);
+    deleteTask(taskIds);
   const handleOpenAddTaskModal = (
     defaultColumn?: string,
     defaultDate?: string
@@ -651,7 +713,11 @@ const App: React.FC = observer(() => {
     form: Omit<Form, "id" | "creatorId"> & { id?: string }
   ) => {
     const payload = { ...form, creatorId: currentUser!.id };
-    socket.emit(form.id ? "forms:update" : "forms:create", payload);
+    if (form.id) {
+      updateForm(payload);
+    } else {
+      createForm(payload);
+    }
     setIsFormBuilderOpen(false);
   };
   const handleEditForm = (formId: string) => {
@@ -662,36 +728,32 @@ const App: React.FC = observer(() => {
     }
   };
   const handleTogglePinForm = (formId: string) =>
-    // socket.emit("forms:toggle-pin", formId);
-    socket.emit("forms:toggle-pin", { id: formId });
+    toggleFormPin(formId);
   const handleMoveFormRequest = (formId: string) => {
     setFormToMoveId(formId);
     setIsMoveFormModalOpen(true);
   };
   const handleMoveFormToBoard = (boardId: string) => {
-    if (formToMoveId)
-      // socket.emit("forms:move-to-board", { formId: formToMoveId, boardId });
-      socket.emit("forms:move-to-board", {
-        id: formToMoveId,
-        category_id: boardId,
-      }); // expects this key from backend
+    if (formToMoveId) {
+      moveFormToBoard(formToMoveId, boardId);
+    }
     setFormToMoveId(null);
     setActivePage("kanban");
     setActiveBoardId(boardId);
   };
   const handleFormColumnChange = (formId: string, newColumnId: string) =>
-    socket.emit("forms:update", { id: formId, columnId: newColumnId });
+    updateForm({ id: formId, columnId: newColumnId });
   const handleFormSubmit = (
     submissionData: Omit<FormSubmission, "id" | "status" | "serialNumber">
-  ) => socket.emit("submissions:submit", submissionData);
+  ) => submitFormSubmission(submissionData);
   const handleSaveDraft = (
     submissionData: Omit<FormSubmission, "id" | "status" | "serialNumber">
-  ) => socket.emit("submissions:save-draft", submissionData);
+  ) => saveSubmissionDraft(submissionData);
   const handleSaveObjective = (
     objectiveData: Omit<Objective, "id" | "keyResults">,
     keyResultsData: Omit<KeyResult, "id">[]
   ) => {
-    socket.emit("objectives:create-with-krs", {
+    createObjectiveWithKRs({
       objectiveData,
       keyResultsData,
     });
@@ -703,7 +765,7 @@ const App: React.FC = observer(() => {
     keyResultsData: Omit<KeyResult, "id">[]
   ): Objective => {
     const tempId = `obj-temp-${Date.now()}`;
-    socket.emit("objectives:create-with-krs", {
+    createObjectiveWithKRs({
       objectiveData,
       keyResultsData,
     });
@@ -718,22 +780,20 @@ const App: React.FC = observer(() => {
     challengeDifficulty: number,
     challengeTagIds: string[]
   ) =>
-    socket.emit("objectives:check-in", {
-      objectiveId,
+    emitObjectiveCheckIn(
       krId,
       value,
       rating,
-      report,
-      challengeDifficulty,
-      challengeTagIds,
-    });
+      JSON.stringify(report),
+      String(challengeDifficulty),
+      challengeTagIds
+    );
   const handleKeyResultAddComment = (
     objectiveId: string,
     krId: string,
     text: string
   ) =>
-    socket.emit("objectives:add-comment", {
-      objectiveId,
+    addObjectiveComment(objectiveId, {
       krId,
       text,
       authorId: currentUser!.id,
@@ -743,7 +803,7 @@ const App: React.FC = observer(() => {
       isOpen: true,
       title: "حذف هدف",
       message: "آیا از حذف این هدف اطمینان دارید؟",
-      onConfirm: () => socket.emit("objectives:delete", objectiveId),
+      onConfirm: () => emitObjectiveDelete(objectiveId),
     });
   const handleDeleteKeyResult = (objectiveId: string, keyResultId: string) =>
     setConfirmation({
@@ -751,7 +811,7 @@ const App: React.FC = observer(() => {
       title: "حذف نتیجه کلیدی",
       message: "آیا از حذف این نتیجه کلیدی اطمینان دارید؟",
       onConfirm: () =>
-        socket.emit("objectives:delete-kr", { objectiveId, keyResultId }),
+        emitObjectiveDeleteKr(keyResultId),
     });
   const handleUpdateObjectiveDetails = (
     objectiveId: string,
@@ -763,7 +823,7 @@ const App: React.FC = observer(() => {
     parentId: string | undefined,
     color: string
   ) =>
-    socket.emit("objectives:update", {
+    emitObjectiveUpdate({
       id: objectiveId,
       title,
       description,
@@ -777,47 +837,37 @@ const App: React.FC = observer(() => {
     objectiveId: string,
     krId: string,
     updates: Partial<KeyResult>
-  ) => socket.emit("objectives:update-kr", { objectiveId, krId, updates });
+  ) => emitObjectiveUpdateKr(krId, updates);
   const handleArchiveObjective = (objectiveId: string) =>
-    socket.emit("objectives:update", { id: objectiveId, isArchived: true });
+    archiveObjective(objectiveId);
   const handleUnarchiveObjective = (objectiveId: string) =>
-    socket.emit("objectives:update", { id: objectiveId, isArchived: false });
+    unarchiveObjective(objectiveId);
   const handleArchiveKeyResult = (objectiveId: string, keyResultId: string) =>
-    socket.emit("objectives:update-kr", {
-      objectiveId,
-      krId: keyResultId,
-      updates: { isArchived: true },
-    });
+    emitObjectiveUpdateKr(keyResultId, { isArchived: true });
   const handleUnarchiveKeyResult = (objectiveId: string, keyResultId: string) =>
-    socket.emit("objectives:update-kr", {
-      objectiveId,
-      krId: keyResultId,
-      updates: { isArchived: false },
-    });
+    emitObjectiveUpdateKr(keyResultId, { isArchived: false });
   const handleSaveStrategy = (
     data: Omit<Strategy, "id" | "isArchived">,
     id?: string
   ) =>
-    socket.emit(id ? "strategies:update" : "strategies:create", {
+    createOrUpdateStrategy({
       ...data,
       id,
     });
   const handleArchiveStrategy = (id: string) =>
-    socket.emit("strategies:update", { id, isArchived: true });
+    archiveStrategy(id);
   const handleUnarchiveStrategy = (id: string) =>
-    socket.emit("strategies:update", { id, isArchived: false });
+    unarchiveStrategy(id);
   const handleSaveIndex = (
     data: Omit<Index, "id" | "isArchived">,
     id?: string
-  ) => socket.emit(id ? "indices:update" : "indices:create", { ...data, id });
+  ) => createOrUpdateIndex({ ...data, id });
   const handleArchiveIndex = (id: string) =>
-    socket.emit("indices:update", { id, isArchived: true });
+    archiveIndex(id);
   const handleUnarchiveIndex = (id: string) =>
-    socket.emit("indices:update", { id, isArchived: false });
+    unarchiveIndex(id);
   const handleToggleDailyTargetTaskInAnjam = (krId: string) =>
-    socket.emit("tasks:toggle-daily-target", {
-      krId,
-      date: new Date().toISOString(),
+    toggleDailyTarget(krId, new Date().toISOString());
     });
   const handleAddGeneralFeedback = (
     data: Omit<GeneralFeedback, "id" | "giverId" | "createdAt">
@@ -835,11 +885,11 @@ const App: React.FC = observer(() => {
       tag, "feedbackTags created or updated"
     );
   const handleDeleteFeedbackTag = (tagId: string) =>
-    socket.emit("feedbackTags:delete", tagId);
+    deleteFeedbackTag(tagId);
   const handleArchiveProject = (projectId: string) =>
-    socket.emit("projects:update", { id: projectId, isArchived: true });
+    archiveProject(projectId);
   const handleUnarchiveProject = (projectId: string) =>
-    socket.emit("projects:update", { id: projectId, isArchived: false });
+    unarchiveProject(projectId);
   const handleSelectConsultant = (consultant: Consultant) => {
     setSelectedConsultant(consultant);
     setActivePage("consulting");
@@ -851,34 +901,26 @@ const App: React.FC = observer(() => {
     setIsConsultantPopoverOpen(true);
   };
   const handleSaveBoard = async (boardData: Omit<Board, "id"> & { id?: string }) => {
-    await safeEmit(
-      boardData.id ? "boards:update" : "boards:create",
-      boardData,
-      boardData.id ? "Board updated" : "Board created"
-    );
-    // socket.emit(boardData.id ? "boards:update" : "boards:create", boardData);
+    if (boardData.id) {
+      await updateBoard(boardData);
+    } else {
+      await createBoard(boardData);
+    }
     setIsAddBoardModalOpen(false);
     setBoardToEdit(null);
   };
-  //updateddddddddddddddddddddddddddddddddddddddddddddddddd
   const handleUpdateBoard = async (updatedBoard: Board) => {
-    await safeEmit("boards:create", updatedBoard, "Board created");
-    // await emitWithAck("boards:update", updatedBoard, (res: any) => {
-    //   // rollback on failure
-    //   if (!res.ok) showToast(res.error || "Board update failed", "error");
-    // })
-    // socket.emit("boards:update", updatedBoard);
+    await updateBoard(updatedBoard);
   };
   const handleTogglePinBoard = async (boardId: string) => {
     const board = store.boards.find((b: any) => b.id === boardId);
     if (!board) return;
-    await safeEmit("boards:update", { id: boardId, isPinned: !board.isPinned });
+    await updateBoard({ id: boardId, isPinned: !board.isPinned });
   };
   const handleCreateWorkspace = async (
     workspaceData: Omit<Workspace, "id">
   ) => {
-    await safeEmit("workspaces:create", workspaceData, "workspaces created");
-    // socket.emit("workspaces:create", workspaceData);
+    await createWorkspace(workspaceData);
     setIsNewWorkspaceModalOpen(false);
   };
 
@@ -886,18 +928,9 @@ const App: React.FC = observer(() => {
     description: string,
     category: CustomerNeedCategory
   ) =>
-    await safeEmit(
-      "customerNeeds:create",
-      { description, category },
-      "customerNeeds created"
-    );
-  // ) => socket.emit("customerNeeds:create", { description, category });
+    await createCustomerNeed({ description, category });
   const handleUpdateCustomerNeed = async (updatedNeed: CustomerNeed) =>
-    await safeEmit(
-      "customerNeeds:update",
-      updatedNeed,
-      "customerNeeds updated"
-    );
+    await updateCustomerNeed(updatedNeed);
   // socket.emit("customerNeeds:update", updatedNeed);
   const handleDeleteCustomerNeed = async (needId: string) =>
     await safeEmit("customerNeeds:delete", needId, "customerNeeds deleted");
@@ -939,8 +972,7 @@ const App: React.FC = observer(() => {
       market: mission.reasoning.market,
       business: mission.reasoning.business,
     };
-    await safeEmit("companyVision:update", newVision, "companyVision updated");
-    // socket.emit("companyVision:update", newVision);
+    await updateCompanyVision(newVision);
     setTimeout(() => {
       setIsIkigaiWizardOpen(false);
       setActivePage("strategy");
@@ -948,16 +980,11 @@ const App: React.FC = observer(() => {
   };
   const handleOpenDocument = async (docId: string) =>
     setDocumentToDisplay(documents.find((d) => d.id === docId) || null);
-  const onDeleteCustomFieldDefinitionFromProject = (
+  const onDeleteCustomFieldDefinitionFromProject = async (
     projId: string,
     defId: string
   ) =>
-    await safeEmit(
-      "projects:delete-custom-field",
-      { projId, defId },
-      "projects delete-custom-field"
-    );
-  // ) => socket.emit("projects:delete-custom-field", { projId, defId });
+    await deleteProjectCustomField(projId, defId);
 
   // =================================================================
   // PAGE RENDERING
@@ -1098,14 +1125,14 @@ const App: React.FC = observer(() => {
               companyVision={store.companyVision}
               onAddStrategy={(data) => handleSaveStrategy(data)}
               onUpdateStrategy={(data) => handleSaveStrategy(data, data.id)}
-              onDeleteStrategy={(id) => socket.emit("strategies:delete", id)}
+              onDeleteStrategy={(id) => deleteStrategy(id)}
               onArchiveStrategy={handleArchiveStrategy}
               onAddIndex={(data) => handleSaveIndex(data)}
               onUpdateIndex={(data) => handleSaveIndex(data, data.id)}
-              onDeleteIndex={(id) => socket.emit("indices:delete", id)}
+              onDeleteIndex={(id) => deleteIndex(id)}
               onArchiveIndex={handleArchiveIndex}
               setCompanyVision={(vision) =>
-                socket.emit("companyVision:update", vision)
+                updateCompanyVision(vision)
               }
               cardSettings={componentStyles.strategyCards}
               popupSettings={componentStyles.popups}
@@ -1136,19 +1163,19 @@ const App: React.FC = observer(() => {
               onDeleteTasks={handleDeleteTasks}
               onAddTask={handleOpenAddTaskModal}
               onUpdateColumnTitle={(colId, title) =>
-                socket.emit("columns:update", { id: colId, title })
+                updateColumn({ id: colId, title })
               }
               onAddColumn={(title) =>
-                socket.emit("columns:create", { title, color: "gray" })
+                createColumn({ title, color: "gray" })
               }
               onUpdateColumnColor={(colId, color) =>
-                socket.emit("columns:update", { id: colId, color })
+                updateColumn({ id: colId, color })
               }
               onUpdateColumnIcon={(colId, icon) =>
-                socket.emit("columns:update", { id: colId, icon })
+                updateColumn({ id: colId, icon })
               }
               onQuickAddTask={handleQuickAddTask}
-              onUpdateProject={(proj) => socket.emit("projects:update", proj)}
+              onUpdateProject={(proj) => updateProject(proj)}
               onAddProject={() => setIsAddProjectModalOpen(true)}
               onArchiveProject={handleArchiveProject}
               isListViewComfortable={isListViewComfortable}
@@ -1164,10 +1191,7 @@ const App: React.FC = observer(() => {
                   label: `فیلد ${type.toLowerCase()}`,
                   type,
                 };
-                socket.emit("projects:add-custom-field", {
-                  projId,
-                  definition: newDef,
-                });
+                addProjectCustomField(projId, newDef);
                 return newDef; // Note: This might be optimistic
               }}
               onUpdateCustomFieldDefinitionInProject={(
@@ -1175,17 +1199,13 @@ const App: React.FC = observer(() => {
                 defId,
                 updates
               ) =>
-                socket.emit("projects:update-custom-field", {
-                  projId,
-                  defId,
-                  updates,
-                })
+                updateProjectCustomField(projId, defId, updates)
               }
               onDeleteCustomFieldDefinitionFromProject={
                 onDeleteCustomFieldDefinitionFromProject
               }
               onUpdateColumnDetails={(colId, updates) =>
-                socket.emit("columns:update", { id: colId, ...updates })
+                updateColumn({ id: colId, ...updates })
               }
               popupSettings={componentStyles.popups}
               activeCardTemplate={activeCardTemplate}
@@ -1246,12 +1266,12 @@ const App: React.FC = observer(() => {
 
             <AdminPage
               users={store.users}
-              setUsers={(updater) => socket.emit("users:set", updater(users))}
+              setUsers={(updater) => setUsers(updater(users))}
               teams={store.teams}
-              setTeams={(updater) => socket.emit("teams:set", updater(teams))}
+              setTeams={(updater) => setTeams(updater(teams))}
               processes={store.processes}
               setProcesses={(updater) =>
-                socket.emit("processes:set", updater(store.processes))
+                setProcesses(updater(store.processes))
               }
               forms={store.forms}
               sidebarConfig={sidebarConfig}
@@ -1288,7 +1308,7 @@ const App: React.FC = observer(() => {
               currentUser={currentUser}
               onSelectTask={setSelectedTaskId}
               onUpdateTask={handleUpdateTask}
-              onUpdateProject={(p) => socket.emit("projects:update", p)}
+              onUpdateProject={(p) => updateProject(p)}
               onQuickAddTask={(content, projectId) =>
                 handleQuickAddTask(content, "todo", projectId)
               }
@@ -1311,7 +1331,7 @@ const App: React.FC = observer(() => {
             <DocumentsPage
               documents={store.documents}
               setDocuments={(updater) =>
-                socket.emit("documents:set", updater(store.documents))
+                setDocuments(updater(store.documents))
               }
               users={store.users}
               tasks={store.tasks}
@@ -1338,7 +1358,7 @@ const App: React.FC = observer(() => {
               currentUser={currentUser}
               objectives={store.objectives}
               onUpdateStatus={(id, status) =>
-                socket.emit("learningAssignments:update", { id, status })
+                updateLearningAssignment({ id, status })
               }
               onCreateMicroLearning={() => setIsCreateMicroLearningOpen(true)}
               onViewMicroLearning={setMicroLearningToView}
@@ -1359,7 +1379,7 @@ const App: React.FC = observer(() => {
               learningAssignments={store.learningAssignments}
               resources={{ microLearnings, youtubeVideos, books }}
               onUpdateLearningAssignmentStatus={(id, status) =>
-                socket.emit("learningAssignments:update", { id, status })
+                updateLearningAssignment({ id, status })
               }
             />
           </>
