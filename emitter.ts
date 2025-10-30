@@ -705,3 +705,394 @@ export const emitObjectiveCheckIn = async (krId: string, value: number, rating?:
   { krId, value, rating, report, challengeDifficulty, challengeTagIds }, 
   "Key Result updated", "objective", "edit");
 };
+
+/* -------------------------------------------------------
+   🔹 BOARDS
+------------------------------------------------------- */
+/** List all boards */
+export const fetchBoards = async () => {
+  return await safeEmit("boards:list", {}, "Fetched boards", "board", "view");
+};
+
+/** Create a board */
+export const createBoard = async (board: any) => {
+  return await safeEmit("boards:create", board, "Board created", "board", "create");
+};
+
+/** Update a board */
+export const updateBoard = async (board: any) => {
+  return await safeEmit("boards:update", board, "Board updated", "board", "edit");
+};
+
+/** Delete a board */
+export const deleteBoard = async (id: string) => {
+  return await safeEmit("boards:delete", { id }, "Board deleted", "board", "delete");
+};
+
+/** Toggle board pin status */
+export const toggleBoardPin = async (id: string) => {
+  return await safeEmit("boards:toggle-pin", { id }, "Board pin toggled", "board", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 COLUMNS
+------------------------------------------------------- */
+/** List all columns */
+export const fetchColumns = async () => {
+  return await safeEmit("columns:list", {}, "Fetched columns", "column", "view");
+};
+
+/** Create a column */
+export const createColumn = async (column: any) => {
+  return await safeEmit("columns:create", column, "Column created", "column", "create");
+};
+
+/** Update a column */
+export const updateColumn = async (column: any) => {
+  return await safeEmit("columns:update", column, "Column updated", "column", "edit");
+};
+
+/** Delete a column */
+export const deleteColumn = async (id: string) => {
+  return await safeEmit("columns:delete", { id }, "Column deleted", "column", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 FORM CATEGORIES
+------------------------------------------------------- */
+/** List all form categories */
+export const fetchFormCategories = async () => {
+  return await safeEmit("formCategories:list", {}, "Fetched form categories", "formCategory", "view");
+};
+
+/** Create a form category */
+export const createFormCategory = async (category: any) => {
+  return await safeEmit("formCategories:create", category, "Form category created", "formCategory", "create");
+};
+
+/** Update a form category */
+export const updateFormCategory = async (category: any) => {
+  return await safeEmit("formCategories:update", category, "Form category updated", "formCategory", "edit");
+};
+
+/** Delete a form category */
+export const deleteFormCategory = async (id: string) => {
+  return await safeEmit("formCategories:delete", { id }, "Form category deleted", "formCategory", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 FORMS (Additional Operations)
+------------------------------------------------------- */
+/** List all forms */
+export const fetchForms = async () => {
+  return await safeEmit("forms:list", {}, "Fetched forms", "form", "view");
+};
+
+/** Toggle form pin status */
+export const toggleFormPin = async (formId: string) => {
+  return await safeEmit("forms:toggle-pin", { id: formId }, "Form pin toggled", "form", "edit");
+};
+
+/** Move form to board */
+export const moveFormToBoard = async (formId: string, boardId: string) => {
+  return await safeEmit("forms:move-to-board", { formId, boardId }, "Form moved to board", "form", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 SUBMISSIONS
+------------------------------------------------------- */
+/** Submit a form submission */
+export const submitFormSubmission = async (submission: any) => {
+  return await safeEmit("submissions:submit", submission, "Submission submitted", "submission", "create");
+};
+
+/** Save a submission draft */
+export const saveSubmissionDraft = async (draft: any) => {
+  return await safeEmit("submissions:save-draft", draft, "Draft saved", "submission", "edit");
+};
+
+/** Fetch all submissions */
+export const fetchSubmissions = async () => {
+  return await safeEmit("submissions:list", {}, "Fetched submissions", "submission", "view");
+};
+
+/* -------------------------------------------------------
+   🔹 DOCUMENTS
+------------------------------------------------------- */
+/** Fetch all documents */
+export const fetchDocuments = async () => {
+  return await safeEmit("documents:list", {}, "Fetched documents", "document", "view");
+};
+
+/** Create a document */
+export const createDocument = async (document: any) => {
+  return await safeEmit("documents:create", document, "Document created", "document", "create");
+};
+
+/** Update a document */
+export const updateDocument = async (document: any) => {
+  return await safeEmit("documents:update", document, "Document updated", "document", "edit");
+};
+
+/** Delete a document */
+export const deleteDocument = async (id: string) => {
+  return await safeEmit("documents:delete", { id }, "Document deleted", "document", "delete");
+};
+
+/** Set documents (bulk update) */
+export const setDocuments = async (documents: any[]) => {
+  return await safeEmit("documents:set", documents, "Documents synced", "document", "sync");
+};
+
+/* -------------------------------------------------------
+   🔹 DOCUMENT STATUSES
+------------------------------------------------------- */
+/** Fetch all document statuses */
+export const fetchDocumentStatuses = async () => {
+  return await safeEmit("documentStatuses:list", {}, "Fetched document statuses", "documentStatus", "view");
+};
+
+/** Create a document status */
+export const createDocumentStatus = async (status: any) => {
+  return await safeEmit("documentStatuses:create", status, "Document status created", "documentStatus", "create");
+};
+
+/** Update a document status */
+export const updateDocumentStatus = async (status: any) => {
+  return await safeEmit("documentStatuses:update", status, "Document status updated", "documentStatus", "edit");
+};
+
+/** Delete a document status */
+export const deleteDocumentStatus = async (id: string) => {
+  return await safeEmit("documentStatuses:delete", { id }, "Document status deleted", "documentStatus", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 FEEDBACK TAGS (Additional Operations)
+------------------------------------------------------- */
+/** Fetch all feedback tags */
+export const fetchFeedbackTags = async () => {
+  return await safeEmit("feedbackTags:list", {}, "Fetched feedback tags", "feedbackTag", "view");
+};
+
+/** Create a feedback tag */
+export const createFeedbackTag = async (tag: any) => {
+  return await safeEmit("feedbackTags:create", tag, "Feedback tag created", "feedbackTag", "create");
+};
+
+/** Update a feedback tag */
+export const updateFeedbackTag = async (tag: any) => {
+  return await safeEmit("feedbackTags:update", tag, "Feedback tag updated", "feedbackTag", "edit");
+};
+
+/** Delete a feedback tag */
+export const deleteFeedbackTag = async (id: string) => {
+  return await safeEmit("feedbackTags:delete", { id }, "Feedback tag deleted", "feedbackTag", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 CUSTOMER NEEDS
+------------------------------------------------------- */
+/** Fetch all customer needs */
+export const fetchCustomerNeeds = async () => {
+  return await safeEmit("customerNeeds:list", {}, "Fetched customer needs", "customerNeed", "view");
+};
+
+/** Create a customer need */
+export const createCustomerNeed = async (need: any) => {
+  return await safeEmit("customerNeeds:create", need, "Customer need created", "customerNeed", "create");
+};
+
+/** Update a customer need */
+export const updateCustomerNeed = async (need: any) => {
+  return await safeEmit("customerNeeds:update", need, "Customer need updated", "customerNeed", "edit");
+};
+
+/** Delete a customer need */
+export const deleteCustomerNeed = async (id: string) => {
+  return await safeEmit("customerNeeds:delete", { id }, "Customer need deleted", "customerNeed", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 CUSTOMER NEED CATEGORIES
+------------------------------------------------------- */
+/** Fetch all customer need categories */
+export const fetchCustomerNeedCategories = async () => {
+  return await safeEmit("customerNeedCategories:list", {}, "Fetched customer need categories", "customerNeedCategory", "view");
+};
+
+/** Create a customer need category */
+export const createCustomerNeedCategory = async (category: any) => {
+  return await safeEmit("customerNeedCategories:create", category, "Customer need category created", "customerNeedCategory", "create");
+};
+
+/** Update a customer need category */
+export const updateCustomerNeedCategory = async (category: any) => {
+  return await safeEmit("customerNeedCategories:update", category, "Customer need category updated", "customerNeedCategory", "edit");
+};
+
+/** Delete a customer need category */
+export const deleteCustomerNeedCategory = async (id: string) => {
+  return await safeEmit("customerNeedCategories:delete", { id }, "Customer need category deleted", "customerNeedCategory", "delete");
+};
+
+/* -------------------------------------------------------
+   🔹 COMPANY VISION
+------------------------------------------------------- */
+/** Update company vision */
+export const updateCompanyVision = async (vision: any) => {
+  return await safeEmit("companyVision:update", vision, "Company vision updated", "companyVision", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 INDICES (Additional Operations)
+------------------------------------------------------- */
+/** Create or update an index */
+export const createOrUpdateIndex = async (index: any) => {
+  return await safeEmit(
+    index.id ? "indices:update" : "indices:create",
+    index,
+    index.id ? "Index updated" : "Index created",
+    "index",
+    index.id ? "edit" : "create"
+  );
+};
+
+/** Delete an index */
+export const deleteIndex = async (id: string) => {
+  return await safeEmit("indices:delete", { id }, "Index deleted", "index", "delete");
+};
+
+/** Archive an index */
+export const archiveIndex = async (id: string) => {
+  return await safeEmit("indices:update", { id, isArchived: true }, "Index archived", "index", "edit");
+};
+
+/** Unarchive an index */
+export const unarchiveIndex = async (id: string) => {
+  return await safeEmit("indices:update", { id, isArchived: false }, "Index unarchived", "index", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 OBJECTIVES (Additional Operations)
+------------------------------------------------------- */
+/** Create objective with key results */
+export const createObjectiveWithKRs = async (payload: any) => {
+  return await safeEmit("objectives:create-with-krs", payload, "Objective created with key results", "objective", "create");
+};
+
+/** Add a comment to an objective */
+export const addObjectiveComment = async (objectiveId: string, comment: any) => {
+  return await safeEmit("objectives:add-comment", { objectiveId, comment }, "Comment added", "objective", "edit");
+};
+
+/** Archive an objective */
+export const archiveObjective = async (objectiveId: string) => {
+  return await safeEmit("objectives:update", { id: objectiveId, isArchived: true }, "Objective archived", "objective", "edit");
+};
+
+/** Unarchive an objective */
+export const unarchiveObjective = async (objectiveId: string) => {
+  return await safeEmit("objectives:update", { id: objectiveId, isArchived: false }, "Objective unarchived", "objective", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 STRATEGIES (Additional Operations)
+------------------------------------------------------- */
+/** Create or update a strategy */
+export const createOrUpdateStrategy = async (strategy: any) => {
+  return await safeEmit(
+    strategy.id ? "strategies:update" : "strategies:create",
+    strategy,
+    strategy.id ? "Strategy updated" : "Strategy created",
+    "strategy",
+    strategy.id ? "edit" : "create"
+  );
+};
+
+/** Archive a strategy */
+export const archiveStrategy = async (id: string) => {
+  return await safeEmit("strategies:update", { id, isArchived: true }, "Strategy archived", "strategy", "edit");
+};
+
+/** Unarchive a strategy */
+export const unarchiveStrategy = async (id: string) => {
+  return await safeEmit("strategies:update", { id, isArchived: false }, "Strategy unarchived", "strategy", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 PROJECTS (Additional Operations)
+------------------------------------------------------- */
+/** Fetch all projects */
+export const fetchProjects = async () => {
+  return await safeEmit("projects:list", {}, "Fetched projects", "project", "view");
+};
+
+/** Delete a project */
+export const deleteProject = async (id: string) => {
+  return await safeEmit("projects:delete", { id }, "Project deleted", "project", "delete");
+};
+
+/** Archive a project */
+export const archiveProject = async (projectId: string) => {
+  return await safeEmit("projects:update", { id: projectId, isArchived: true }, "Project archived", "project", "edit");
+};
+
+/** Unarchive a project */
+export const unarchiveProject = async (projectId: string) => {
+  return await safeEmit("projects:update", { id: projectId, isArchived: false }, "Project unarchived", "project", "edit");
+};
+
+/** Add custom field to project */
+export const addProjectCustomField = async (projId: string, definition: any) => {
+  return await safeEmit("projects:add-custom-field", { projId, definition }, "Custom field added", "project", "edit");
+};
+
+/** Update custom field in project */
+export const updateProjectCustomField = async (projId: string, defId: string, updates: any) => {
+  return await safeEmit("projects:update-custom-field", { projId, defId, updates }, "Custom field updated", "project", "edit");
+};
+
+/** Delete custom field from project */
+export const deleteProjectCustomField = async (projId: string, defId: string) => {
+  return await safeEmit("projects:delete-custom-field", { projId, defId }, "Custom field deleted", "project", "edit");
+};
+
+/* -------------------------------------------------------
+   🔹 USERS (Additional Operations)
+------------------------------------------------------- */
+/** Fetch all users */
+export const fetchUsers = async () => {
+  return await safeEmit("users:list", {}, "Fetched users", "user", "view");
+};
+
+/** Set users (bulk update) */
+export const setUsers = async (users: any[]) => {
+  return await safeEmit("users:set", users, "Users synced", "user", "sync");
+};
+
+/* -------------------------------------------------------
+   🔹 PROCESSES (Additional Operations)
+------------------------------------------------------- */
+/** Set processes (bulk update) */
+export const setProcesses = async (processes: any[]) => {
+  return await safeEmit("processes:set", processes, "Processes synced", "process", "sync");
+};
+
+/* -------------------------------------------------------
+   🔹 AUTH
+------------------------------------------------------- */
+/** Login attempt */
+export const attemptLogin = async (username: string, password: string) => {
+  return await safeEmit("login:attempt", { username, password }, "Login attempt sent", "auth", "login");
+};
+
+/** Join client session */
+export const joinClientSession = async (userId: string) => {
+  return await safeEmit("client:join", { userId }, "Client session joined", "auth", "join");
+};
+
+/** Mark notification as read */
+export const markNotificationAsRead = async (id: string) => {
+  return await safeEmit("notifications:mark-read", { id }, "Notification marked as read", "notification", "edit");
+};
