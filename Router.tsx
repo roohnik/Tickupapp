@@ -31,8 +31,8 @@ import SelfKnowledgePage from "./components/SelfKnowledgePage";
 import OrganizationalKnowledgePage from "./components/OrganizationalKnowledgePage";
 import UpgradePage from "./components/UpgradePage";
 
-import { socket } from "./services/socketService";
 import { safeEmit } from "./utils/socketActions";
+import { updateLearningAssignment } from "./emitter";
 
 // ...other pages
 
@@ -65,37 +65,6 @@ const Router: React.FC = observer(() => {
     case "moderation":
       return <ModerationDashboard />;
 case "documents": // ✅ new case
-  // Local state to trigger fetch only once
-  const [documentsLoaded, setDocumentsLoaded] = useState(false);
-
-  React.useEffect(() => {
-    if (!documentsLoaded) {
-      // Fetch documents
-      socket.emit("documents:set", documentStore.documents);
-
-      // Listen for updates from server
-      attachListeners.socket.on("documents:updated", (updatedDoc) => {
-        documentStore.updateDocument(updatedDoc);
-      });
-
-      socket.on("documents:set", (docs) => {
-        documentStore.setDocuments(docs);
-      });
-
-      // Fetch document statuses from server
-      socket.emit("documentStatuses:list", null, (statuses) => {
-        documentStore.setStatuses(statuses);
-      });
-
-      setDocumentsLoaded(true);
-
-      // Cleanup listeners when unmounting
-      return () => {
-        socket.off("documents:updated");
-        socket.off("documents:set");
-      };
-    }
-  }, [documentsLoaded, socketManager, documentStore]);
       return (
         <DocumentsPage
           documents={documentStore.documents}
@@ -123,8 +92,8 @@ case "documents": // ✅ new case
             users={userStore.users}
             currentUser={userStore.currentUser}
             objectives={learningStore.objectives}
-            onUpdateStatus={(id, status) =>
-              socket.emit("learningAssignments:update", { id, status })
+            onUpdateStatus={async (id, status) =>
+              await updateLearningAssignment({ id, status })
             }
             onCreateMicroLearning={() => setIsCreateMicroLearningOpen(true)}
             onViewMicroLearning={setFormToDisplay}
@@ -144,8 +113,8 @@ case "documents": // ✅ new case
             onDeleteFeedbackTag={(tagId) => console.log(tagId)} // implement handler
             learningAssignments={learningStore.assignments}
             resources={{ microLearnings: [], youtubeVideos: [], books: [] }}
-            onUpdateLearningAssignmentStatus={(id, status) =>
-              socket.emit("learningAssignments:update", { id, status })
+            onUpdateLearningAssignmentStatus={async (id, status) =>
+              await updateLearningAssignment({ id, status })
             }
           />
         </>
