@@ -1,0 +1,816 @@
+{
+  "version": "1.0.0",
+  "description": "Socket.io API specification for TickUp backend",
+  "socketUrl": {
+    "default": "http://localhost:3000",
+    "envVariable": "REACT_APP_SOCKET_URL"
+  },
+  "connection": {
+    "autoConnect": true,
+    "transports": ["websocket"],
+    "withCredentials": true
+  },
+  "authentication": {
+    "required": true,
+    "method": "token",
+    "events": {
+      "auth:login": {
+        "description": "User login",
+        "request": {
+          "email": "string",
+          "password": "string"
+        },
+        "response": {
+          "ok": "boolean",
+          "user": "User",
+          "token": "string"
+        }
+      },
+      "auth:register": {
+        "description": "User registration",
+        "request": {
+          "name": "string",
+          "email": "string",
+          "password": "string"
+        },
+        "response": {
+          "ok": "boolean",
+          "user": "User",
+          "token": "string"
+        }
+      },
+      "auth:logout": {
+        "description": "User logout",
+        "request": {},
+        "response": {
+          "ok": "boolean"
+        }
+      }
+    }
+  },
+  "categories": {
+    "workspaces": {
+      "description": "Workspace management",
+      "events": {
+        "workspaces:list": {
+          "type": "request",
+          "description": "Get all workspaces",
+          "request": {},
+          "response": {
+            "ok": "boolean",
+            "workspaces": "Workspace[]"
+          }
+        },
+        "workspaces:get": {
+          "type": "request",
+          "description": "Get single workspace",
+          "request": {
+            "id": "string"
+          },
+          "response": {
+            "ok": "boolean",
+            "workspace": "Workspace"
+          }
+        },
+        "workspaces:create": {
+          "type": "request",
+          "description": "Create workspace",
+          "request": {
+            "name": "string",
+            "description": "string?",
+            "color": "string?",
+            "icon": "string?"
+          },
+          "response": {
+            "ok": "boolean",
+            "workspace": "Workspace"
+          },
+          "broadcast": "workspaces:created"
+        },
+        "workspaces:created": {
+          "type": "broadcast",
+          "description": "Workspace created event",
+          "payload": "Workspace"
+        },
+        "workspaces:update": {
+          "type": "request",
+          "description": "Update workspace",
+          "request": {
+            "id": "string",
+            "name": "string?",
+            "description": "string?",
+            "color": "string?"
+          },
+          "response": {
+            "ok": "boolean",
+            "workspace": "Workspace"
+          },
+          "broadcast": "workspaces:updated"
+        },
+        "workspaces:updated": {
+          "type": "broadcast",
+          "description": "Workspace updated event",
+          "payload": "Workspace"
+        },
+        "workspaces:delete": {
+          "type": "request",
+          "description": "Delete workspace",
+          "request": {
+            "id": "string"
+          },
+          "response": {
+            "ok": "boolean"
+          },
+          "broadcast": "workspaces:deleted"
+        },
+        "workspaces:deleted": {
+          "type": "broadcast",
+          "description": "Workspace deleted event",
+          "payload": "string"
+        }
+      }
+    },
+    "teams": {
+      "description": "Team management",
+      "events": {
+        "teams:list": {
+          "type": "request",
+          "request": {},
+          "response": {
+            "ok": "boolean",
+            "teams": "Team[]"
+          }
+        },
+        "teams:create": {
+          "type": "request",
+          "broadcast": "teams:created"
+        },
+        "teams:created": {
+          "type": "broadcast",
+          "payload": "Team"
+        },
+        "teams:update": {
+          "type": "request",
+          "broadcast": "teams:updated"
+        },
+        "teams:updated": {
+          "type": "broadcast",
+          "payload": "Team"
+        },
+        "teams:delete": {
+          "type": "request",
+          "broadcast": "teams:deleted"
+        },
+        "teams:deleted": {
+          "type": "broadcast",
+          "payload": "string"
+        },
+        "teams:set": {
+          "type": "broadcast",
+          "payload": "Team[]"
+        }
+      }
+    },
+    "tasks": {
+      "description": "Task management",
+      "events": {
+        "tasks:list": {
+          "type": "request",
+          "request": {},
+          "response": {
+            "ok": "boolean",
+            "tasks": "Task[]"
+          }
+        },
+        "tasks:create": {
+          "type": "request",
+          "request": {
+            "title": "string",
+            "description": "string?",
+            "status": "string?",
+            "priority": "string?",
+            "assigneeId": "string?",
+            "dueDate": "string?"
+          },
+          "response": {
+            "ok": "boolean",
+            "task": "Task"
+          },
+          "broadcast": "tasks:created"
+        },
+        "tasks:created": {
+          "type": "broadcast",
+          "payload": "Task"
+        },
+        "tasks:update": {
+          "type": "request",
+          "broadcast": "tasks:updated"
+        },
+        "tasks:updated": {
+          "type": "broadcast",
+          "payload": "Task"
+        },
+        "tasks:delete": {
+          "type": "request",
+          "broadcast": "tasks:deleted"
+        },
+        "tasks:deleted": {
+          "type": "broadcast",
+          "payload": "string | string[]"
+        },
+        "tasks:move": {
+          "type": "request",
+          "broadcast": "tasks:moved"
+        },
+        "tasks:moved": {
+          "type": "broadcast"
+        },
+        "tasks:reorder": {
+          "type": "request",
+          "broadcast": "tasks:reordered"
+        }
+      }
+    },
+    "projects": {
+      "description": "Project management",
+      "events": {
+        "projects:list": {
+          "type": "request"
+        },
+        "projects:create": {
+          "type": "request",
+          "broadcast": "projects:created"
+        },
+        "projects:created": {
+          "type": "broadcast"
+        },
+        "projects:update": {
+          "type": "request",
+          "broadcast": "projects:updated"
+        },
+        "projects:updated": {
+          "type": "broadcast"
+        },
+        "projects:delete": {
+          "type": "request",
+          "broadcast": "projects:deleted"
+        },
+        "projects:deleted": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "documents": {
+      "description": "Document management",
+      "events": {
+        "documents:list": {
+          "type": "request"
+        },
+        "documents:create": {
+          "type": "request",
+          "broadcast": "documents:created"
+        },
+        "documents:created": {
+          "type": "broadcast"
+        },
+        "documents:update": {
+          "type": "request",
+          "broadcast": "documents:updated"
+        },
+        "documents:updated": {
+          "type": "broadcast"
+        },
+        "documents:delete": {
+          "type": "request",
+          "broadcast": "documents:deleted"
+        },
+        "documents:deleted": {
+          "type": "broadcast"
+        },
+        "documentStatuses:list": {
+          "type": "request"
+        }
+      }
+    },
+    "forms": {
+      "description": "Form management",
+      "events": {
+        "forms:list": {
+          "type": "request"
+        },
+        "forms:create": {
+          "type": "request",
+          "broadcast": "forms:created"
+        },
+        "forms:created": {
+          "type": "broadcast"
+        },
+        "forms:update": {
+          "type": "request",
+          "broadcast": "forms:updated"
+        },
+        "forms:updated": {
+          "type": "broadcast"
+        },
+        "forms:delete": {
+          "type": "request",
+          "broadcast": "forms:deleted"
+        },
+        "forms:deleted": {
+          "type": "broadcast"
+        },
+        "forms:pin": {
+          "type": "request",
+          "broadcast": "forms:pinned"
+        },
+        "forms:move": {
+          "type": "request",
+          "broadcast": "forms:moved"
+        },
+        "formSubmissions:list": {
+          "type": "request"
+        },
+        "formSubmissions:create": {
+          "type": "request",
+          "broadcast": "formSubmissions:created"
+        },
+        "formSubmissions:created": {
+          "type": "broadcast"
+        },
+        "formSubmissions:approve": {
+          "type": "request",
+          "broadcast": "formSubmissions:approved"
+        }
+      }
+    },
+    "objectives": {
+      "description": "OKR - Objectives management",
+      "events": {
+        "objectives:list": {
+          "type": "request"
+        },
+        "objectives:create": {
+          "type": "request",
+          "broadcast": "objectives:created"
+        },
+        "objectives:created": {
+          "type": "broadcast"
+        },
+        "objectives:update": {
+          "type": "request",
+          "broadcast": "objectives:updated"
+        },
+        "objectives:updated": {
+          "type": "broadcast"
+        },
+        "objectives:delete": {
+          "type": "request",
+          "broadcast": "objectives:deleted"
+        },
+        "objectives:deleted": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "keyResults": {
+      "description": "OKR - Key Results management",
+      "events": {
+        "keyResults:list": {
+          "type": "request"
+        },
+        "keyResults:create": {
+          "type": "request",
+          "broadcast": "keyResults:created"
+        },
+        "keyResults:created": {
+          "type": "broadcast"
+        },
+        "keyResults:update": {
+          "type": "request",
+          "broadcast": "keyResults:updated"
+        },
+        "keyResults:updated": {
+          "type": "broadcast"
+        },
+        "keyResults:delete": {
+          "type": "request",
+          "broadcast": "keyResults:deleted"
+        },
+        "keyResults:deleted": {
+          "type": "broadcast"
+        },
+        "krCheckins:create": {
+          "type": "request",
+          "broadcast": "krCheckins:created"
+        },
+        "krCheckins:created": {
+          "type": "broadcast"
+        },
+        "krCategories:list": {
+          "type": "request"
+        }
+      }
+    },
+    "feedback": {
+      "description": "Feedback management",
+      "events": {
+        "feedback:list": {
+          "type": "request"
+        },
+        "feedback:create": {
+          "type": "request",
+          "broadcast": "feedback:created"
+        },
+        "feedback:created": {
+          "type": "broadcast"
+        },
+        "feedback:update": {
+          "type": "request",
+          "broadcast": "feedback:updated"
+        },
+        "feedback:updated": {
+          "type": "broadcast"
+        },
+        "feedback:delete": {
+          "type": "request",
+          "broadcast": "feedback:deleted"
+        },
+        "feedback:deleted": {
+          "type": "broadcast"
+        },
+        "generalFeedbacks:list": {
+          "type": "request"
+        },
+        "generalFeedbacks:create": {
+          "type": "request",
+          "broadcast": "generalFeedbacks:created"
+        },
+        "generalFeedbacks:created": {
+          "type": "broadcast"
+        },
+        "feedbackTags:list": {
+          "type": "request"
+        },
+        "feedbackTags:create": {
+          "type": "request",
+          "broadcast": "feedbackTags:created"
+        },
+        "feedbackTags:created": {
+          "type": "broadcast"
+        },
+        "feedbackTags:update": {
+          "type": "request",
+          "broadcast": "feedbackTags:updated"
+        },
+        "feedbackTags:updated": {
+          "type": "broadcast"
+        },
+        "feedbackTags:delete": {
+          "type": "request",
+          "broadcast": "feedbackTags:deleted"
+        },
+        "feedbackTags:deleted": {
+          "type": "broadcast"
+        },
+        "feedbackTags:set": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "strategies": {
+      "description": "Strategic planning",
+      "events": {
+        "strategies:list": {
+          "type": "request"
+        },
+        "strategies:create": {
+          "type": "request",
+          "broadcast": "strategies:created"
+        },
+        "strategies:created": {
+          "type": "broadcast"
+        },
+        "strategies:update": {
+          "type": "request",
+          "broadcast": "strategies:updated"
+        },
+        "strategies:updated": {
+          "type": "broadcast"
+        },
+        "strategies:delete": {
+          "type": "request",
+          "broadcast": "strategies:deleted"
+        },
+        "strategies:deleted": {
+          "type": "broadcast"
+        },
+        "strategies:destroyed": {
+          "type": "broadcast"
+        },
+        "strategies:restored": {
+          "type": "broadcast"
+        },
+        "strategies:status-changed": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "learning": {
+      "description": "Learning resources and assignments",
+      "events": {
+        "learningAssignments:list": {
+          "type": "request"
+        },
+        "learningAssignments:create": {
+          "type": "request",
+          "broadcast": "learningAssignments:created"
+        },
+        "learningAssignments:created": {
+          "type": "broadcast"
+        },
+        "learningAssignments:update": {
+          "type": "request",
+          "broadcast": "learningAssignments:updated"
+        },
+        "learningAssignments:updated": {
+          "type": "broadcast"
+        },
+        "learningAssignments:delete": {
+          "type": "request",
+          "broadcast": "learningAssignments:deleted"
+        },
+        "learningAssignments:deleted": {
+          "type": "broadcast"
+        },
+        "books:list": {
+          "type": "request"
+        },
+        "books:create": {
+          "type": "request",
+          "broadcast": "books:created"
+        },
+        "books:created": {
+          "type": "broadcast"
+        },
+        "microLearnings:list": {
+          "type": "request"
+        },
+        "microLearnings:create": {
+          "type": "request",
+          "broadcast": "microLearnings:created"
+        },
+        "youtubeVideos:list": {
+          "type": "request"
+        },
+        "youtubeVideos:create": {
+          "type": "request",
+          "broadcast": "youtubeVideos:created"
+        }
+      }
+    },
+    "processes": {
+      "description": "Process management",
+      "events": {
+        "processes:list": {
+          "type": "request"
+        },
+        "processes:create": {
+          "type": "request",
+          "broadcast": "processes:created"
+        },
+        "processes:created": {
+          "type": "broadcast"
+        },
+        "processes:update": {
+          "type": "request",
+          "broadcast": "processes:updated"
+        },
+        "processes:updated": {
+          "type": "broadcast"
+        },
+        "processes:delete": {
+          "type": "request",
+          "broadcast": "processes:deleted"
+        },
+        "processes:deleted": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "calendar": {
+      "description": "Calendar events",
+      "events": {
+        "calendarEvents:list": {
+          "type": "request"
+        },
+        "calendarEvents:create": {
+          "type": "request",
+          "broadcast": "calendarEvents:created"
+        },
+        "calendarEvents:created": {
+          "type": "broadcast"
+        },
+        "calendarEvents:update": {
+          "type": "request",
+          "broadcast": "calendarEvents:updated"
+        },
+        "calendarEvents:updated": {
+          "type": "broadcast"
+        },
+        "calendarEvents:delete": {
+          "type": "request",
+          "broadcast": "calendarEvents:deleted"
+        },
+        "calendarEvents:deleted": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "notifications": {
+      "description": "Notification management",
+      "events": {
+        "notifications:list": {
+          "type": "request"
+        },
+        "notifications:create": {
+          "type": "request",
+          "broadcast": "notifications:created"
+        },
+        "notifications:created": {
+          "type": "broadcast"
+        },
+        "notifications:markAsRead": {
+          "type": "request",
+          "broadcast": "notifications:read"
+        },
+        "notifications:read": {
+          "type": "broadcast"
+        },
+        "notifications:markAllAsRead": {
+          "type": "request",
+          "broadcast": "notifications:allRead"
+        },
+        "notifications:delete": {
+          "type": "request",
+          "broadcast": "notifications:deleted"
+        },
+        "notifications:deleted": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "audit": {
+      "description": "Audit logging",
+      "events": {
+        "audit:log": {
+          "type": "request",
+          "request": {
+            "entityId": "string",
+            "entityType": "string",
+            "action": "string",
+            "userId": "string",
+            "timestamp": "number"
+          }
+        },
+        "audit:list": {
+          "type": "request"
+        }
+      }
+    },
+    "settings": {
+      "description": "Settings management",
+      "events": {
+        "settings:get": {
+          "type": "request"
+        },
+        "settings:update": {
+          "type": "request",
+          "broadcast": "settings:updated"
+        },
+        "settings:updated": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "users": {
+      "description": "User management",
+      "events": {
+        "users:list": {
+          "type": "request"
+        },
+        "users:get": {
+          "type": "request"
+        },
+        "users:update": {
+          "type": "request",
+          "broadcast": "users:updated"
+        },
+        "users:updated": {
+          "type": "broadcast"
+        },
+        "users:delete": {
+          "type": "request",
+          "broadcast": "users:deleted"
+        },
+        "users:deleted": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "permissions": {
+      "description": "Permission management",
+      "events": {
+        "permissions:list": {
+          "type": "request"
+        }
+      }
+    },
+    "roles": {
+      "description": "Role management",
+      "events": {
+        "roles:list": {
+          "type": "request"
+        },
+        "roles:create": {
+          "type": "request",
+          "broadcast": "roles:created"
+        },
+        "roles:created": {
+          "type": "broadcast"
+        },
+        "roles:update": {
+          "type": "request",
+          "broadcast": "roles:updated"
+        },
+        "roles:updated": {
+          "type": "broadcast"
+        },
+        "roles:delete": {
+          "type": "request",
+          "broadcast": "roles:deleted"
+        },
+        "roles:deleted": {
+          "type": "broadcast"
+        }
+      }
+    },
+    "customers": {
+      "description": "Customer/CRM management",
+      "events": {
+        "customers:list": {
+          "type": "request"
+        },
+        "customers:create": {
+          "type": "request",
+          "broadcast": "customers:created"
+        },
+        "customers:created": {
+          "type": "broadcast"
+        },
+        "customers:update": {
+          "type": "request",
+          "broadcast": "customers:updated"
+        },
+        "customers:updated": {
+          "type": "broadcast"
+        },
+        "customers:delete": {
+          "type": "request",
+          "broadcast": "customers:deleted"
+        },
+        "customers:deleted": {
+          "type": "broadcast"
+        }
+      }
+    }
+  },
+  "eventPatterns": {
+    "request": {
+      "description": "Client sends request to server",
+      "format": "socket.emit(eventName, payload, callback)",
+      "callback": {
+        "success": {
+          "ok": true,
+          "data": "any"
+        },
+        "error": {
+          "ok": false,
+          "error": "string"
+        }
+      }
+    },
+    "broadcast": {
+      "description": "Server broadcasts to all clients",
+      "format": "io.emit(eventName, payload) or socket.broadcast.emit(eventName, payload)",
+      "listening": "socket.on(eventName, handler)"
+    }
+  },
+  "notes": {
+    "broadcasting": "When handling mutating operations (create/update/delete), the backend should broadcast the change to all connected clients using the corresponding broadcast event",
+    "responseFormat": "All request handlers should respond using the callback with {ok: boolean, ...data} format",
+    "authentication": "All socket connections should be authenticated. The frontend uses withCredentials: true",
+    "cors": "The backend should configure CORS to allow the frontend origin",
+    "totalEvents": "143+ socket event listeners configured in SocketManager.ts",
+    "totalEmitters": "707+ emitter functions in emitter.ts"
+  }
+}
