@@ -67,10 +67,49 @@ import {
   SuggestedMission,
 } from "./services/geminiService";
 import { CONSULTANTS } from "./constants";
-import { socket } from "./services/socketService";
 import { observer } from "mobx-react-lite";
 import { useSocketListeners } from "./hooks/useSocketListeners";
 import { useStore } from "./stores/StoreContext";
+import { 
+  emitClientJoin,
+  emitLoginAttempt,
+  emitUserCreate,
+  emitUserUpdate,
+  createTask,
+  updateTask,
+  deleteTask,
+  toggleDailyTarget,
+  createForm,
+  updateForm,
+  toggleFormPin,
+  moveFormToBoard,
+  submitFormSubmission,
+  saveDraftSubmission,
+  createObjectiveWithKRs,
+  addObjectiveComment,
+  emitObjectiveDelete,
+  emitObjectiveDeleteKr,
+  emitObjectiveUpdate,
+  emitObjectiveUpdateKr,
+  createStrategy,
+  updateStrategy,
+  deleteStrategy,
+  createOrUpdateIndex,
+  deleteIndex,
+  updateCompanyVision,
+  createColumn,
+  updateColumn,
+  updateProject,
+  addProjectCustomField,
+  updateProjectCustomField,
+  setUsers,
+  setTeams,
+  setProcesses,
+  setDocuments,
+  updateLearningAssignment,
+  deleteFeedbackTag
+} from "./emitter";
+import { safeEmit } from "./utils/socketActions";
 
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
@@ -318,7 +357,7 @@ const App: React.FC = observer(() => {
   useEffect(() => {
     // if store.currentUser exists, tell server who we are so it can emit to our room
     if (store.currentUser?.id) {
-      socket.emit("client:join", { userId: store.currentUser.id });
+      emitClientJoin(store.currentUser.id);
     }
 
     // =================================================================
@@ -586,7 +625,7 @@ const App: React.FC = observer(() => {
   const handleLogin = (username: string, password: string) => {
     setIsLoggingIn(true);
     setLoginError("");
-    socket.emit("login:attempt", { username, password });
+    emitLoginAttempt(username, password);
   };
 
   const handleLogout = () => {
@@ -610,22 +649,25 @@ const App: React.FC = observer(() => {
     password?: string,
     signatureUrl?: string | null
   ) =>
-    socket.emit("users:update", {
+    emitUserUpdate({
       id: userId,
-      data: { name, username, password, signatureUrl },
+      name,
+      username,
+      password,
+      signatureUrl
     });
   const handleCreateUser = (userData: Omit<User, "id" | "avatarUrl">) =>
-    socket.emit("users:create", userData);
+    emitUserCreate(userData);
   const handleAddTask = (
     taskData: Omit<Task, "id" | "tags" | "comments" | "checklist">
-  ) => socket.emit("tasks:create", taskData);
+  ) => createTask(taskData);
   const handleQuickAddTask = (
     content: string,
     columnId: string,
     projectId: string
   ) => {
     if (!currentUser) return;
-    socket.emit("tasks:create", {
+    createTask({
       content,
       columnId,
       projectId,
@@ -634,11 +676,11 @@ const App: React.FC = observer(() => {
     });
   };
   const handleUpdateTask = (updatedTask: Task) =>
-    socket.emit("tasks:update", updatedTask);
+    updateTask(updatedTask.id, updatedTask);
   const handleTaskColumnChange = (taskId: string, newColumnId: string) =>
-    socket.emit("tasks:update", { id: taskId, columnId: newColumnId });
+    updateTask(taskId, { columnId: newColumnId });
   const handleDeleteTasks = (taskIds: string[]) =>
-    socket.emit("tasks:delete", taskIds);
+    deleteTask(taskIds);
   const handleOpenAddTaskModal = (
     defaultColumn?: string,
     defaultDate?: string
@@ -651,7 +693,11 @@ const App: React.FC = observer(() => {
     form: Omit<Form, "id" | "creatorId"> & { id?: string }
   ) => {
     const payload = { ...form, creatorId: currentUser!.id };
-    socket.emit(form.id ? "forms:update" : "forms:create", payload);
+    if (form.id) {
+      updateForm(payload);
+    } else {
+      createForm(payload);
+    }
     setIsFormBuilderOpen(false);
   };
   const handleEditForm = (formId: string) => {
@@ -662,36 +708,31 @@ const App: React.FC = observer(() => {
     }
   };
   const handleTogglePinForm = (formId: string) =>
-    // socket.emit("forms:toggle-pin", formId);
-    socket.emit("forms:toggle-pin", { id: formId });
+    toggleFormPin(formId);
   const handleMoveFormRequest = (formId: string) => {
     setFormToMoveId(formId);
     setIsMoveFormModalOpen(true);
   };
   const handleMoveFormToBoard = (boardId: string) => {
     if (formToMoveId)
-      // socket.emit("forms:move-to-board", { formId: formToMoveId, boardId });
-      socket.emit("forms:move-to-board", {
-        id: formToMoveId,
-        category_id: boardId,
-      }); // expects this key from backend
+      moveFormToBoard(formToMoveId, boardId);
     setFormToMoveId(null);
     setActivePage("kanban");
     setActiveBoardId(boardId);
   };
   const handleFormColumnChange = (formId: string, newColumnId: string) =>
-    socket.emit("forms:update", { id: formId, columnId: newColumnId });
+    updateForm({ id: formId, columnId: newColumnId });
   const handleFormSubmit = (
     submissionData: Omit<FormSubmission, "id" | "status" | "serialNumber">
-  ) => socket.emit("submissions:submit", submissionData);
+  ) => submitFormSubmission(submissionData);
   const handleSaveDraft = (
     submissionData: Omit<FormSubmission, "id" | "status" | "serialNumber">
-  ) => socket.emit("submissions:save-draft", submissionData);
+  ) => saveDraftSubmission(submissionData);
   const handleSaveObjective = (
     objectiveData: Omit<Objective, "id" | "keyResults">,
     keyResultsData: Omit<KeyResult, "id">[]
   ) => {
-    socket.emit("objectives:create-with-krs", {
+    createObjectiveWithKRs({
       objectiveData,
       keyResultsData,
     });
@@ -703,7 +744,7 @@ const App: React.FC = observer(() => {
     keyResultsData: Omit<KeyResult, "id">[]
   ): Objective => {
     const tempId = `obj-temp-${Date.now()}`;
-    socket.emit("objectives:create-with-krs", {
+    createObjectiveWithKRs({
       objectiveData,
       keyResultsData,
     });
@@ -718,22 +759,20 @@ const App: React.FC = observer(() => {
     challengeDifficulty: number,
     challengeTagIds: string[]
   ) =>
-    socket.emit("objectives:check-in", {
-      objectiveId,
+    emitObjectiveCheckIn(
       krId,
       value,
       rating,
-      report,
-      challengeDifficulty,
-      challengeTagIds,
-    });
+      JSON.stringify(report),
+      String(challengeDifficulty),
+      challengeTagIds
+    );
   const handleKeyResultAddComment = (
     objectiveId: string,
     krId: string,
     text: string
   ) =>
-    socket.emit("objectives:add-comment", {
-      objectiveId,
+    addObjectiveComment(objectiveId, {
       krId,
       text,
       authorId: currentUser!.id,
@@ -743,7 +782,7 @@ const App: React.FC = observer(() => {
       isOpen: true,
       title: "حذف هدف",
       message: "آیا از حذف این هدف اطمینان دارید؟",
-      onConfirm: () => socket.emit("objectives:delete", objectiveId),
+      onConfirm: () => emitObjectiveDelete(objectiveId),
     });
   const handleDeleteKeyResult = (objectiveId: string, keyResultId: string) =>
     setConfirmation({
@@ -751,7 +790,7 @@ const App: React.FC = observer(() => {
       title: "حذف نتیجه کلیدی",
       message: "آیا از حذف این نتیجه کلیدی اطمینان دارید؟",
       onConfirm: () =>
-        socket.emit("objectives:delete-kr", { objectiveId, keyResultId }),
+        emitObjectiveDeleteKr(keyResultId),
     });
   const handleUpdateObjectiveDetails = (
     objectiveId: string,
@@ -763,7 +802,7 @@ const App: React.FC = observer(() => {
     parentId: string | undefined,
     color: string
   ) =>
-    socket.emit("objectives:update", {
+    emitObjectiveUpdate({
       id: objectiveId,
       title,
       description,
@@ -777,48 +816,39 @@ const App: React.FC = observer(() => {
     objectiveId: string,
     krId: string,
     updates: Partial<KeyResult>
-  ) => socket.emit("objectives:update-kr", { objectiveId, krId, updates });
+  ) => emitObjectiveUpdateKr(krId, updates);
   const handleArchiveObjective = (objectiveId: string) =>
-    socket.emit("objectives:update", { id: objectiveId, isArchived: true });
+    emitObjectiveUpdate({ id: objectiveId, isArchived: true });
   const handleUnarchiveObjective = (objectiveId: string) =>
-    socket.emit("objectives:update", { id: objectiveId, isArchived: false });
+    emitObjectiveUpdate({ id: objectiveId, isArchived: false });
   const handleArchiveKeyResult = (objectiveId: string, keyResultId: string) =>
-    socket.emit("objectives:update-kr", {
-      objectiveId,
-      krId: keyResultId,
-      updates: { isArchived: true },
-    });
+    emitObjectiveUpdateKr(keyResultId, { isArchived: true });
   const handleUnarchiveKeyResult = (objectiveId: string, keyResultId: string) =>
-    socket.emit("objectives:update-kr", {
-      objectiveId,
-      krId: keyResultId,
-      updates: { isArchived: false },
-    });
+    emitObjectiveUpdateKr(keyResultId, { isArchived: false });
   const handleSaveStrategy = (
     data: Omit<Strategy, "id" | "isArchived">,
     id?: string
-  ) =>
-    socket.emit(id ? "strategies:update" : "strategies:create", {
-      ...data,
-      id,
-    });
+  ) => {
+    if (id) {
+      return updateStrategy({ ...data, id } as Strategy);
+    } else {
+      return createStrategy(data);
+    }
+  };
   const handleArchiveStrategy = (id: string) =>
-    socket.emit("strategies:update", { id, isArchived: true });
+    updateStrategy({ id, isArchived: true } as Strategy);
   const handleUnarchiveStrategy = (id: string) =>
-    socket.emit("strategies:update", { id, isArchived: false });
+    updateStrategy({ id, isArchived: false } as Strategy);
   const handleSaveIndex = (
     data: Omit<Index, "id" | "isArchived">,
     id?: string
-  ) => socket.emit(id ? "indices:update" : "indices:create", { ...data, id });
+  ) => createOrUpdateIndex({ ...data, id });
   const handleArchiveIndex = (id: string) =>
-    socket.emit("indices:update", { id, isArchived: true });
+    createOrUpdateIndex({ id, isArchived: true });
   const handleUnarchiveIndex = (id: string) =>
-    socket.emit("indices:update", { id, isArchived: false });
+    createOrUpdateIndex({ id, isArchived: false });
   const handleToggleDailyTargetTaskInAnjam = (krId: string) =>
-    socket.emit("tasks:toggle-daily-target", {
-      krId,
-      date: new Date().toISOString(),
-    });
+    toggleDailyTarget(krId, new Date().toISOString());
   const handleAddGeneralFeedback = (
     data: Omit<GeneralFeedback, "id" | "giverId" | "createdAt">
   ) =>
